@@ -55,6 +55,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Advanced Noise Reduction**: Comprehensive denoising system for cleaner images
+  - Stratified/jittered sampling for better pixel coverage
+  - Cosine-weighted importance sampling for Lambertian materials  
+  - Temporal accumulation with automatic reset on camera movement
+  - Improved random number generation (Xorshift128+ with PCG hashing)
+  - Russian roulette termination for energy conservation
+  - Enhanced tone mapping and gamma correction
+
+### Improved
+- **Interactive Quality**: Increased default samples to 4 per frame and ray depth to 10
+- **Material Rendering**: Better dielectric materials with Schlick approximation
+- **GPU Performance**: Optimized shader buffer layout and memory usage
+- **Real-time Experience**: Progressive quality improvement when camera is stationary
+
+### Technical Details
+- Added accumulation texture buffer for temporal denoising
+- Implemented blue noise-like sampling distribution
+- Enhanced material scattering with importance sampling
+- Automatic accumulation buffer reset on camera movement
+- Better convergence characteristics at low sample counts
+
 ### Planned Features
 - Denoising algorithms for cleaner images at lower sample counts
 - Volumetric rendering for atmospheric effects

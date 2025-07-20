@@ -67,6 +67,14 @@ ambient 0.05 0.05 0.1
 - **GPU compute shaders** for parallel ray processing
 - **Early ray termination** reducing unnecessary calculations
 
+### **Advanced Denoising & Quality**
+- **Temporal Accumulation**: Progressive refinement in interactive mode
+- **Stratified Sampling**: Blue noise-like distribution for better pixel coverage
+- **Importance Sampling**: Cosine-weighted sampling for Lambertian materials
+- **Advanced RNG**: Xorshift128+ with PCG hashing for reduced correlation
+- **Tone Mapping**: Enhanced HDR tone mapping prevents blown highlights
+- **Smart Reset**: Automatic quality reset on camera movement for responsiveness
+
 ## 🚀 Getting Started
 
 ### Build System
