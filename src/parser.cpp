@@ -7,7 +7,13 @@
 
 bool Parser::parse_scene_file(const std::string& filename, Scene& scene) {
     // Determine file type by extension
-    std::string extension = filename.substr(filename.find_last_of('.') + 1);
+    size_t dot_pos = filename.find_last_of('.');
+    if (dot_pos == std::string::npos) {
+        std::cerr << "File has no extension: " << filename << std::endl;
+        return false;
+    }
+    
+    std::string extension = filename.substr(dot_pos + 1);
     std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
     
     if (extension == "obj") {
@@ -105,11 +111,31 @@ bool Parser::parse_scene_description_file(const std::string& filename, Scene& sc
                 std::cerr << "ERROR: Invalid camera format at line " << line_number << ": " << line << std::endl;
                 return false;
             }
+            
+            // Validate camera parameters
+            if (fov <= 0 || fov >= 180) {
+                std::cerr << "ERROR: Camera FOV must be between 0 and 180 degrees at line " << line_number << ": " << line << std::endl;
+                return false;
+            }
+            if (aspect <= 0) {
+                std::cerr << "ERROR: Camera aspect ratio must be positive at line " << line_number << ": " << line << std::endl;
+                return false;
+            }
+            if (up.length() < 1e-6f) {
+                std::cerr << "ERROR: Camera up vector cannot be zero at line " << line_number << ": " << line << std::endl;
+                return false;
+            }
             scene.camera = Camera(pos, target, up, fov, aspect);
             has_valid_content = true;
         } else if (command == "background") {
             if (!(iss >> scene.background_color.x >> scene.background_color.y >> scene.background_color.z)) {
                 std::cerr << "ERROR: Invalid background format at line " << line_number << ": " << line << std::endl;
+                return false;
+            }
+            
+            // Validate background color is non-negative
+            if (scene.background_color.x < 0 || scene.background_color.y < 0 || scene.background_color.z < 0) {
+                std::cerr << "ERROR: Background color must be non-negative at line " << line_number << ": " << line << std::endl;
                 return false;
             }
             has_valid_content = true;
@@ -155,7 +181,9 @@ bool Parser::parse_scene_description_file(const std::string& filename, Scene& sc
                 albedo = Color(0, 0, 0);
             } else if (type == "glossy") {
                 mat_type = MaterialType::GLOSSY;
-                iss >> roughness;
+                if (!iss.eof()) {
+                    iss >> roughness;
+                }
                 if (!iss.eof()) {
                     iss >> specular;  // Optional specular parameter
                 }
@@ -167,14 +195,9 @@ bool Parser::parse_scene_description_file(const std::string& filename, Scene& sc
                 if (!iss.eof()) {
                     iss >> roughness;   // Optional surface roughness
                 }
-            } else if (type == "glossy") {
-                mat_type = MaterialType::GLOSSY;
-                if (!iss.eof()) iss >> roughness;
-                if (!iss.eof()) iss >> specular;
-            } else if (type == "subsurface") {
-                mat_type = MaterialType::SUBSURFACE;
-                if (!iss.eof()) iss >> subsurface;
-                if (!iss.eof()) iss >> roughness;
+            } else {
+                std::cerr << "ERROR: Unknown material type '" << type << "' at line " << line_number << ": " << line << std::endl;
+                return false;
             }
             
             auto material = std::make_shared<Material>(mat_type, albedo, roughness, ior, emission, metallic, specular, subsurface);
@@ -191,9 +214,18 @@ bool Parser::parse_scene_description_file(const std::string& filename, Scene& sc
                 return false;
             }
             
+            // Validate sphere radius
+            if (radius <= 0.0f) {
+                std::cerr << "ERROR: Sphere radius must be positive at line " << line_number << ": " << line << std::endl;
+                return false;
+            }
+            
             int material_id = 0;
             if (material_map.find(material_name) != material_map.end()) {
                 material_id = material_map[material_name];
+            } else {
+                std::cerr << "ERROR: Undefined material '" << material_name << "' at line " << line_number << ": " << line << std::endl;
+                return false;
             }
             
             scene.add_object(std::make_shared<Sphere>(center, radius, material_id));
@@ -207,9 +239,18 @@ bool Parser::parse_scene_description_file(const std::string& filename, Scene& sc
                 return false;
             }
             
+            // Validate normal vector is not zero
+            if (normal.length() < 1e-6f) {
+                std::cerr << "ERROR: Plane normal vector cannot be zero at line " << line_number << ": " << line << std::endl;
+                return false;
+            }
+            
             int material_id = 0;
             if (material_map.find(material_name) != material_map.end()) {
                 material_id = material_map[material_name];
+            } else {
+                std::cerr << "ERROR: Undefined material '" << material_name << "' at line " << line_number << ": " << line << std::endl;
+                return false;
             }
             
             scene.add_object(std::make_shared<Plane>(point, normal, material_id));
@@ -225,6 +266,18 @@ bool Parser::parse_scene_description_file(const std::string& filename, Scene& sc
             }
             if (iss >> radius) {
                 // Soft shadows radius provided
+            }
+            
+            // Validate light intensity is non-negative
+            if (intensity.x < 0 || intensity.y < 0 || intensity.z < 0) {
+                std::cerr << "ERROR: Light intensity must be non-negative at line " << line_number << ": " << line << std::endl;
+                return false;
+            }
+            
+            // Validate radius is non-negative
+            if (radius < 0) {
+                std::cerr << "ERROR: Light radius must be non-negative at line " << line_number << ": " << line << std::endl;
+                return false;
             }
             
             auto light = std::make_shared<PointLight>(position, intensity, radius);
