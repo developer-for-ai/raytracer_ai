@@ -1,41 +1,204 @@
-# 🏗️ Build System Guide
+# 🏗️ Cross-Platform Build System Guide
 
-Complete guide to the CMake-based build system, dependencies, and compilation process.
+Complete guide to the CMake-based cross-platform build system with automatic platform detection, dependency management, and compilation for **Windows**, **macOS**, and **Linux**.
 
 ## Overview
 
-The raytracer uses CMake for cross-platform builds with automatic dependency detection and optimized compiler settings.
+The GPU raytracer features a sophisticated CMake build system that automatically detects your platform, manages dependencies, and applies platform-specific optimizations for optimal performance.
 
-### Build Requirements
+### System Requirements
 
-**Minimum System Requirements:**
-- CMake 3.10 or higher
+**Minimum Requirements:**
+- CMake 3.16 or higher
 - C++17 compatible compiler (GCC 7+, Clang 5+, MSVC 2019+)
 - OpenGL 4.3 compatible graphics drivers
 - Git (for version detection)
 
-**Required Dependencies:**
-- GLFW 3.3+ (windowing and input)
-- GLEW 2.0+ (OpenGL extension loading)
-- OpenGL 4.3+ (compute shaders)
+**Cross-Platform Dependencies:**
+- **GLFW 3.3+** - Cross-platform windowing and input handling
+- **GLEW 2.0+** - OpenGL extension loading library
+- **OpenGL 4.3+** - Compute shader support for GPU raytracing
 
-## Quick Build
+## 🚀 Quick Start
 
-### Automated Build Script
+### Automated Platform Detection
+
+The build system automatically detects your platform and uses appropriate tools:
 
 ```bash
-# Use the automated build script (recommended)
+# Linux - Uses pkg-config and native package managers
+./build.sh
+
+# macOS - Uses Homebrew and Xcode tools  
+./build_macos.sh
+
+# Windows - Uses vcpkg and Visual Studio
+build.bat
+```
+
+## Platform-Specific Build Details
+
+### 🐧 **Linux Build System**
+
+**Automated Build Script:**
+```bash
+# Automatic distribution detection and dependency installation
 ./build.sh
 ```
 
-The build script automatically:
-- Checks dependencies
-- Configures CMake
-- Compiles optimized build
-- Runs basic tests
-- Reports build status
+**Supported Distributions:**
+- **Ubuntu/Debian/Mint**: `apt` package manager with mesa drivers
+- **Fedora/CentOS/RHEL**: `dnf` package manager with mesa libraries
+- **Arch/Manjaro**: `pacman` package manager with X11 GLFW
+- **openSUSE/SLES**: `zypper` package manager with development libraries
 
-### Manual Build Process
+**Distribution-Specific Commands:**
+```bash
+# Ubuntu/Debian
+sudo apt install libglfw3-dev libglew-dev libgl1-mesa-dev cmake build-essential
+
+# Fedora/CentOS/RHEL
+sudo dnf install glfw-devel glew-devel mesa-libGL-devel cmake gcc-c++
+
+# Arch/Manjaro  
+sudo pacman -S glfw-x11 glew mesa cmake gcc
+
+# openSUSE
+sudo zypper install libglfw3-devel glew-devel Mesa-libGL-devel cmake gcc-c++
+```
+
+### 🍎 **macOS Build System**
+
+**Automated Build Script:**
+```bash
+# Automatic dependency installation and build with Homebrew
+./build_macos.sh
+```
+
+**System Requirements:**
+- **macOS 10.14+** (Mojave or later) - OpenGL 4.1 Core Profile support
+- **Xcode Command Line Tools** - C++ compiler and system headers
+- **Homebrew** - Package manager for GLFW/GLEW libraries
+
+**Dependency Installation:**
+```bash
+# Install Homebrew package manager
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install graphics libraries
+brew install glfw glew cmake
+
+# Install development tools
+xcode-select --install
+```
+
+**macOS-Specific Features:**
+- **App Bundle Creation** - Proper `.app` bundle with `Info.plist.in`
+- **Retina Display Support** - High-DPI rendering optimization
+- **GPU Switching** - Automatic graphics switching on MacBooks
+- **Framework Integration** - Cocoa, IOKit, and CoreVideo frameworks
+
+### 🪟 **Windows Build System**
+
+**Automated Build Script:**
+```batch
+# Automatic dependency installation and build with vcpkg
+build.bat
+```
+
+**System Requirements:**
+- **Windows 10/11** - Modern Windows with DirectX/OpenGL support
+- **Visual Studio 2019/2022** - C++ compiler with CMake tools
+- **vcpkg** - C++ package manager for dependencies
+
+**Development Environment Setup:**
+```batch
+# Install vcpkg (one-time setup)
+git clone https://github.com/Microsoft/vcpkg.git C:\vcpkg
+cd C:\vcpkg
+.\bootstrap-vcpkg.bat
+
+# Set environment variables
+set VCPKG_ROOT=C:\vcpkg
+set PATH=%PATH%;C:\vcpkg
+
+# Install dependencies
+vcpkg install glfw3 glew opengl --triplet x64-windows
+```
+
+**Windows-Specific Features:**
+- **Visual Studio Integration** - Native MSVC compiler support
+- **DLL Management** - Automatic dependency resolution
+- **Windows Subsystem** - GUI application configuration
+- **x64 Architecture** - 64-bit Windows targeting
+
+## Platform-Specific Build Details
+
+### Linux (Ubuntu/Debian)
+
+```bash
+# Install dependencies
+sudo apt update
+sudo apt install cmake build-essential libglfw3-dev libglew-dev
+
+# Build
+./build.sh
+```
+
+### Linux (Fedora/CentOS/RHEL)
+
+```bash
+# Install dependencies
+sudo dnf install cmake gcc-c++ glfw-devel glew-devel
+
+# Build
+./build.sh
+```
+
+### Linux (Arch)
+
+```bash
+# Install dependencies
+sudo pacman -S cmake gcc glfw glew
+
+# Build  
+./build.sh
+```
+
+### macOS
+
+```bash
+# Install dependencies via Homebrew
+brew install cmake glfw glew
+
+# Build
+./build.sh
+```
+
+### Windows (MSYS2/MinGW)
+
+```bash
+# Install dependencies
+pacman -S mingw-w64-x86_64-cmake
+pacman -S mingw-w64-x86_64-glfw
+pacman -S mingw-w64-x86_64-glew
+
+# Build
+./build.sh
+```
+
+### Windows (Visual Studio)
+
+```cmd
+:: Use vcpkg for dependencies
+vcpkg install glfw3 glew
+
+:: Configure and build
+cmake -DCMAKE_TOOLCHAIN_FILE=[vcpkg root]/scripts/buildsystems/vcpkg.cmake ..
+cmake --build . --config Release
+```
+
+## Manual Build Process
 
 ```bash
 # Create build directory
@@ -150,70 +313,55 @@ make -j$(nproc)
 - `-g` - Debug symbols for profiling
 - Suitable for performance analysis
 
-## Platform-Specific Builds
+## CMake Configuration Details
 
-### Linux (Ubuntu/Debian)
+### Cross-Platform CMake Features
 
-```bash
-# Install dependencies
-sudo apt update
-sudo apt install cmake build-essential libglfw3-dev libglew-dev
+**Automatic Platform Detection:**
+```cmake
+# Platform detection and messaging
+if(WIN32)
+    set(PLATFORM_NAME "Windows")
+elseif(APPLE)  
+    set(PLATFORM_NAME "macOS")
+elseif(UNIX)
+    set(PLATFORM_NAME "Linux")
+endif()
 
-# Build
-./build.sh
+message(STATUS "Building for ${PLATFORM_NAME}")
 ```
 
-### Linux (Fedora/CentOS/RHEL)
-
-```bash
-# Install dependencies
-sudo dnf install cmake gcc-c++ glfw-devel glew-devel
-
-# Build
-./build.sh
+**Compiler-Specific Optimizations:**
+```cmake
+# Cross-platform compiler optimizations
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+    if(NOT CMAKE_CROSSCOMPILING)
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+    endif()
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DNDEBUG")
+endif()
 ```
 
-### Linux (Arch)
-
-```bash
-# Install dependencies
-sudo pacman -S cmake gcc glfw glew
-
-# Build  
-./build.sh
-```
-
-### macOS
-
-```bash
-# Install dependencies via Homebrew
-brew install cmake glfw glew
-
-# Build
-./build.sh
-```
-
-### Windows (MSYS2/MinGW)
-
-```bash
-# Install dependencies
-pacman -S mingw-w64-x86_64-cmake
-pacman -S mingw-w64-x86_64-glfw
-pacman -S mingw-w64-x86_64-glew
-
-# Build
-./build.sh
-```
-
-### Windows (Visual Studio)
-
-```cmd
-:: Use vcpkg for dependencies
-vcpkg install glfw3 glew
-
-:: Configure and build
-cmake -DCMAKE_TOOLCHAIN_FILE=[vcpkg root]/scripts/buildsystems/vcpkg.cmake ..
-cmake --build . --config Release
+**Platform-Specific Library Linking:**
+```cmake
+# Windows libraries
+if(WIN32)
+    set(GRAPHICS_LIBS glfw GLEW::GLEW)
+    
+# macOS frameworks  
+elseif(APPLE)
+    find_library(COCOA_LIBRARY Cocoa REQUIRED)
+    find_library(IOKIT_LIBRARY IOKit REQUIRED)
+    find_library(COREVIDEO_LIBRARY CoreVideo REQUIRED)
+    set(GRAPHICS_LIBS glfw GLEW::GLEW ${COCOA_LIBRARY} ${IOKIT_LIBRARY} ${COREVIDEO_LIBRARY})
+    
+# Linux pkg-config
+else()
+    pkg_check_modules(GLFW REQUIRED glfw3)
+    set(GRAPHICS_LIBS ${GLFW_LIBRARIES} GLEW::GLEW)
+endif()
 ```
 
 ## Advanced Build Options

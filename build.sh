@@ -1,15 +1,46 @@
 #!/bin/bash
 
-# Build script for the Interactive GPU Ray Tracer
-echo "🚀 Building Interactive GPU Ray Tracer..."
-echo "========================================="
+# Build script for Interactive GPU Ray Tracer - Linux
+echo "🚀 Building Interactive GPU Ray Tracer for Linux..."
+echo "=================================================="
+
+# Detect distribution
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    DISTRO=$ID
+else
+    DISTRO="unknown"
+fi
+
+echo "Detected distribution: $DISTRO"
 
 # Check for required dependencies
 echo "Checking dependencies..."
 if ! pkg-config --exists glfw3; then
     echo "❌ GLFW3 not found. Installing dependencies..."
-    sudo apt update
-    sudo apt install -y libglfw3-dev libglew-dev libgl1-mesa-dev
+    
+    case $DISTRO in
+        "ubuntu"|"debian")
+            sudo apt update
+            sudo apt install -y libglfw3-dev libglew-dev libgl1-mesa-dev cmake build-essential
+            ;;
+        "fedora"|"centos"|"rhel")
+            sudo dnf install -y glfw-devel glew-devel mesa-libGL-devel cmake gcc-c++
+            ;;
+        "arch"|"manjaro")
+            sudo pacman -S --needed glfw-x11 glew mesa cmake gcc
+            ;;
+        "opensuse"|"sled"|"sles")
+            sudo zypper install libglfw3-devel glew-devel Mesa-libGL-devel cmake gcc-c++
+            ;;
+        *)
+            echo "⚠️  Unknown distribution. Please install manually:"
+            echo "   - GLFW3 development libraries"
+            echo "   - GLEW development libraries" 
+            echo "   - OpenGL development libraries"
+            echo "   - CMake and C++ compiler"
+            ;;
+    esac
 else
     echo "✅ Graphics dependencies found"
 fi

@@ -1,6 +1,11 @@
 # 🚀 High-Performance Interactive GPU Ray Tracer
 
-A complete, production-ready **interactive GPU ray tracing system** with real-time performance and offline rendering capabilities. This implementation demonstrat#### **temple_scene.scene** - C- 🔧 **Advanced geometry** with quad walls, proper face ├── examples/            # Scene files showcasing features
+A complete, production-ready **interactive GPU ray tracing system** with real-time performance and offline rendering capabilities. This implementation demonstrates state-of-the-art computer graphics techniques optimized for maximum performance on modern GPU hardware with OpenGL compute shaders.
+
+## 📁 Project Structure
+
+```
+├── examples/            # Scene files showcasing features
 │   ├── cornell_box.scene    # Classic Cornell Box reference
 │   ├── lighting_demo.scene  # Complete lighting showcase
 │   ├── materials_showcase.scene # All material types
@@ -17,15 +22,29 @@ A complete, production-ready **interactive GPU ray tracing system** with real-ti
 │   ├── lighting.md          # Complete lighting system
 │   ├── scene_format.md      # Scene file format specification
 │   ├── build_system.md      # Build and compilation guide
-│   └── intersections.md     # Ray-geometry intersection algorithmsnd solid structure
-- ⚡ **Performance optimized** for real-time exploration at 15+ FPS with triangle mesheslete Architectural Showcase
+│   └── intersections.md     # Ray-geometry intersection algorithms
+```
+
+## 🏛️ **Featured Scenes**
+
+#### **temple_scene.scene** - Complete Architectural Showcase
+**Linux/macOS:**
 ```bash
 ./build/bin/RayTracerGPU examples/temple_scene.scene
 ```
+**Windows:**
+```batch
+build\bin\Release\RayTracerGPU.exe examples\temple_scene.scene
+```
 
-#### **temple_sacred.scene** - Mystical Atmosphere
+#### **temple_sacred.scene** - Mystical Atmosphere  
+**Linux/macOS:**
 ```bash
 ./build/bin/RayTracerGPU examples/temple_sacred.scene
+```
+**Windows:**
+```batch
+build\bin\Release\RayTracerGPU.exe examples\temple_sacred.scene
 ```
 
 **Temple Features:**
@@ -123,30 +142,132 @@ ambient 0.05 0.05 0.1
 
 ## 🚀 Getting Started
 
-### Build System
-```bash
-# Install dependencies (Ubuntu/Debian)
-sudo apt install libglfw3-dev libglew-dev libgl1-mesa-dev
+The GPU ray tracer supports **Windows**, **macOS**, and **Linux** with platform-specific build scripts and dependency management.
 
-# Build GPU raytracer
+### 🐧 **Linux Build**
+
+**Automated Build:**
+```bash
+# Ubuntu/Debian/Mint
 ./build.sh
 
-# Or manual build
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
+# The script automatically detects your distribution and installs:
+# - GLFW3 development libraries  
+# - GLEW development libraries
+# - OpenGL development libraries
+# - CMake and build tools
 ```
 
-### Quick Start
+**Supported Distributions:**
+- **Ubuntu/Debian**: `apt install libglfw3-dev libglew-dev libgl1-mesa-dev cmake`
+- **Fedora/CentOS/RHEL**: `dnf install glfw-devel glew-devel mesa-libGL-devel cmake gcc-c++`
+- **Arch/Manjaro**: `pacman -S glfw-x11 glew mesa cmake gcc`
+- **openSUSE**: `zypper install libglfw3-devel glew-devel Mesa-libGL-devel cmake gcc-c++`
+
+### 🍎 **macOS Build**
+
+**Automated Build:**
+```bash
+# Run the macOS build script
+./build_macos.sh
+
+# The script automatically installs via Homebrew:
+# - GLFW3 libraries
+# - GLEW libraries  
+# - Xcode Command Line Tools
+# - CMake build system
+```
+
+**Requirements:**
+- **macOS 10.14+** (Mojave or later)
+- **Homebrew** package manager
+- **Xcode Command Line Tools**
+
+**Manual Installation:**
+```bash
+# Install Homebrew (if not already installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install dependencies
+brew install glfw glew cmake
+
+# Install Xcode Command Line Tools
+xcode-select --install
+```
+
+### 🪟 **Windows Build**
+
+**Automated Build:**
+```batch
+# Run the Windows build script
+build.bat
+
+# The script automatically installs via vcpkg:
+# - GLFW3 libraries
+# - GLEW libraries
+# - OpenGL libraries
+```
+
+**Requirements:**
+- **Windows 10/11** with Visual Studio 2019/2022
+- **vcpkg** package manager  
+- **CMake** 3.16+
+
+**Manual Setup:**
+```batch
+# Install vcpkg (one-time setup)
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+.\bootstrap-vcpkg.bat
+
+# Install dependencies  
+vcpkg install glfw3 glew opengl --triplet x64-windows
+
+# Add vcpkg to PATH and set VCPKG_ROOT environment variable
+```
+
+### 🔧 **Manual Build (All Platforms)**
+
+If the automated scripts don't work for your setup:
+
+```bash
+# Create build directory
+mkdir build && cd build
+
+# Configure project
+cmake .. -DCMAKE_BUILD_TYPE=Release
+
+# Build (Linux/macOS)
+make -j$(nproc)
+
+# Build (Windows)
+cmake --build . --config Release
+```
+
+### 🎮 **Quick Start**
+
+**Linux/macOS:**
 ```bash
 # Interactive real-time exploration (requires display)
 ./build/bin/RayTracerGPU examples/cornell_box.scene
 
-# High-quality file output (headless rendering)
+# High-quality file output (headless rendering)  
 ./build/bin/RayTracerGPU examples/showcase.scene -o render.ppm -w 1920 -h 1080 -s 16
 
 # Lighting demonstration
 ./build/bin/RayTracerGPU examples/lighting_demo.scene -o lighting.ppm -w 1200 -h 900 -s 12
+```
+
+**Windows:**
+```batch
+# Interactive real-time exploration (requires display)
+build\bin\Release\RayTracerGPU.exe examples\cornell_box.scene
+
+# High-quality file output (headless rendering)
+build\bin\Release\RayTracerGPU.exe examples\showcase.scene -o render.ppm -w 1920 -h 1080 -s 16
+
+# Lighting demonstration  
+build\bin\Release\RayTracerGPU.exe examples\lighting_demo.scene -o lighting.ppm -w 1200 -h 900 -s 12
 ```
 
 ## 🎮 Interactive Controls
