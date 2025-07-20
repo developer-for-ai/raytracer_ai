@@ -1,124 +1,159 @@
-# 🏛️ Indian Temple Scene Collection
+# 🏛️ Temple Scene Guide
 
-This collection provides immersive Indian-style temple scenes for exploration and rendering in the GPU raytracer.
+This guide covers the temple scenes and 3D models included with the raytracer, showcasing advanced architectural geometry and interactive exploration.
 
-## 🎮 Interactive Temple Exploration
+## Temple Architecture
 
-### Primary Recommendation: Indian Temple OBJ
-```bash
-# Best temple exploration experience (294 triangles, automatic camera positioning)
-./build/bin/RayTracerGPU examples/indian_temple.obj
-```
-
-**Features:**
-- Authentic Indian temple architecture generated procedurally
-- 294 triangles with pillars, altar, interior spaces, and decorative elements
-- **NEW: Automatic camera positioning** - no more "empty screen" issues!
-- Optimized for real-time exploration at 15+ FPS
-- Use WASD keys to walk through the temple interior
-- Mouse/arrow keys to look around and explore details
-
-### Alternative: Complete Scene with Decorations
-```bash
-# Temple with full decorations, lighting, and materials
-./build/bin/RayTracerGPU examples/temple_final_complete.scene
-```
-
-## 🎨 Available Temple Scene
-
-### **temple_final_complete.scene** - Complete Scene with OBJ Architecture
-```bash
-./build/bin/RayTracerGPU examples/temple_final_complete.scene
-```
-- **Purpose**: Complete temple scene with OBJ geometry and decorations  
-- **Features**: Uses `load_obj` command for 294-triangle architecture, rich materials, atmospheric lighting
-- **Performance**: Optimized for exploration at 15+ FPS
-- **Best for**: Comprehensive temple experience with full triangle mesh geometry
-
-## 🏗️ Temple Architecture Features
+The temple scenes demonstrate authentic Indian temple architecture with modern ray tracing techniques.
 
 ### Architectural Elements
-- **Pillars**: Classical Indian temple columns with decorative capitals
-- **Altar**: Multi-tiered sacred platform with ceremonial objects
-- **Floor**: Large plane surface for walking throughout temple
-- **Walls**: Temple boundaries and interior divisions
-- **Entrance**: Grand entrance with threshold and decorative elements
+
+#### **Garbhagriha (Sanctum)**
+- The innermost chamber where the main deity resides
+- Accessible through the front doorway
+- Interior walls with proper material assignments
+- Sacred space with mystical lighting
+
+#### **Mandapa (Assembly Hall)**
+- Open hall for gathering and ceremonies
+- Walkable interior space with proper floor geometry
+- Multiple material zones (stone, marble, decorative)
+- Natural and artificial lighting
+
+#### **Shikhara (Spire)**
+- Towering spire representing the cosmic mountain
+- Complex triangulated geometry
+- Gradient materials from base to peak
+- Dramatic lighting showcase
+
+#### **Gopuram (Entrance Tower)**
+- Ornate entrance structure
+- Multiple levels with detailed geometry
+- Rich material variety (stone, gold, decorative elements)
+- Prominent lighting features
+
+## Available Temple Files
+
+### 3D Models (.obj)
+- **`temple.obj`** - Complete temple with interior access and proper doorways
+- **`temple_simple.obj`** - Simplified version for performance testing (24 triangles)
+
+### Scene Files (.scene)
+- **`temple_scene.scene`** - Full temple scene with OBJ geometry, multiple materials, and advanced lighting
+- **`temple_sacred.scene`** - Atmospheric temple scene with mystical lighting focused on sacred elements
+
+## Interactive Exploration
+
+### How to Explore the Temple
+
+1. **Start the Interactive Viewer:**
+   ```bash
+   ./build/bin/RayTracerGPU examples/temple.obj
+   ```
+
+2. **Navigation Controls:**
+   - **WASD** - Move forward/left/backward/right
+   - **Mouse** - Look around (click to capture mouse)
+   - **Space/Shift** - Move up/down
+   - **R** - Reset camera to starting position
+
+3. **Exploration Tips:**
+   - **Enter through the front doorway** - Look for the opening in the front wall
+   - **Walk into the interior** - The temple has a proper walkable floor
+   - **Explore different rooms** - Move around to see various architectural details
+   - **Try different lighting angles** - Use mouse look to see how materials respond to light
+
+### Temple Scene Variations
+
+#### **temple_scene.scene** - Complete Architectural Showcase
+```bash
+./build/bin/RayTracerGPU examples/temple_scene.scene
+```
+Features:
+- Full OBJ temple geometry with decorative sphere arrangements
+- Multiple material types (temple_stone, marble, gold, decorative)
+- Advanced lighting setup with warm interior and cool exterior lighting
+- Emissive materials for glowing architectural elements
+
+#### **temple_sacred.scene** - Mystical Atmosphere
+```bash
+./build/bin/RayTracerGPU examples/temple_sacred.scene
+```
+Features:
+- Atmospheric lighting focused on spiritual ambiance
+- Enhanced material properties for mystical effects
+- Specialized lighting for sacred chamber illumination
+- Soft shadows and ambient lighting for meditative atmosphere
+
+## Technical Implementation
+
+### Geometry Features
+- **Quad Triangulation:** All quad faces automatically converted to triangles
+- **Interior Access:** Proper doorway geometry allows walking inside
+- **Face Winding:** Consistent face normals for proper lighting
+- **Material Zones:** Different materials for walls, floors, decorative elements
+
+### Performance Characteristics
+- **294 triangles** in the complete temple.obj
+- **15-22 FPS** real-time performance on modern GPUs
+- **Optimized for triangle-heavy scenes** with efficient GPU memory usage
+- **BVH acceleration** for fast ray-triangle intersection
 
 ### Materials Used
-- **temple_stone/temple_walls**: Sandstone temple architecture (lambertian)
-- **sacred_marble/altar_marble**: White marble for sacred areas (lambertian)
-- **gold_accent/gold_temple**: Polished gold decorative elements (metal)
-- **sacred_crystal**: Clear crystals for mystical elements (dielectric)
-- **bronze_detail**: Bronze ceremonial objects (metal)
-- **torch_flame/divine_glow**: Light-emitting materials (emissive)
-
-### Lighting Design
-- **Sunlight**: Primary illumination streaming through entrance
-- **Torch lights**: Warm flickering light from temple torches
-- **Mystical glows**: Colored lighting for sacred/mystical atmosphere
-- **Altar lighting**: Focused illumination on sacred altar area
-- **Ambient**: Soft overall illumination for good visibility
-
-## 🎯 Usage Recommendations
-
-### For Interactive Exploration
-1. **Start with OBJ**: `./build/bin/RayTracerGPU examples/indian_temple.obj`
-2. **Use WASD**: Walk through the temple spaces
-3. **Look around**: Mouse or arrow keys to explore details
-4. **Try different angles**: Position camera to see architectural details
-
-### For High-Quality Renders
-```bash
-# Comprehensive temple scene
-./build/bin/RayTracerGPU examples/temple_immersive.scene -o temple.ppm -w 1920 -h 1440 -s 8
-
-# Interior focus
-./build/bin/RayTracerGPU examples/temple_walkable_interior.scene -o interior.ppm -w 1600 -h 1200 -s 12
-
-# Architecture focus  
-./build/bin/RayTracerGPU examples/indian_temple.obj -o architecture.ppm -w 1600 -h 1200 -s 16
+```
+temple_stone   - Main structural material (gray stone)
+marble         - Interior decorative surfaces (white)
+gold           - Ornamental elements and deity fixtures
+decorative     - Colorful accent materials
+emissive       - Light-emitting architectural elements
 ```
 
-### For Performance Testing
-- The temple scenes are excellent for testing triangle-heavy performance
-- 294 triangles in the OBJ provides good triangle intersection testing
-- Performance optimizations kick in automatically with triangle counts > 100
+## High-Quality Rendering
 
-## 🔧 Technical Details
+### Offline Rendering Commands
+```bash
+# High-quality temple render
+./build/bin/RayTracerGPU examples/temple_scene.scene -o temple_hq.ppm -w 1920 -h 1080 -s 32
 
-### Performance Optimizations
-- **Adaptive sampling**: Reduced samples for triangle-heavy scenes
-- **Early ray termination**: Aggressive cutoffs for performance
-- **Stride-based triangle testing**: Test subset of triangles for distant rays
-- **Shadow optimization**: Shadows disabled for triangle-heavy scenes
-- **Material simplification**: Simplified materials for better performance
+# Sacred atmosphere render
+./build/bin/RayTracerGPU examples/temple_sacred.scene -o temple_sacred.ppm -w 1600 -h 1200 -s 16
 
-### New Features Added
-- **load_obj command**: Load OBJ files within scene files with custom materials
-- **Automatic camera positioning**: OBJ files loaded directly now automatically position camera
-- **Proper bounds calculation**: Camera positioned based on model dimensions
-- **Material assignment**: OBJ geometry can use any defined material from scene
+# Direct OBJ rendering with auto-camera
+./build/bin/RayTracerGPU examples/temple.obj -o temple_direct.ppm -w 1920 -h 1080 -s 24
+```
 
-### Scene Generation
-- **Authentic temple architecture**: Complex 294-triangle structure with pillars and altar
-- **Authentic proportions**: Based on classical Indian temple architecture
-- **Modular design**: Easy to modify individual elements
-- **Performance aware**: Designed to maintain 15+ FPS with 200+ triangles
+## Cultural Context
 
-## 🌟 Exploration Tips
+### Indian Temple Architecture
+The temple design incorporates authentic elements of traditional Indian temple architecture:
 
-### Navigation
-- **Start at entrance**: Position camera outside looking in
-- **Walk slowly**: Use gradual movements to appreciate details
-- **Look up**: Don't forget to explore ceiling and upper architectural elements
-- **Visit altar**: Central altar area has the most detailed elements
-- **Check alcoves**: Side areas have hidden details and atmospheric lighting
+- **Sacred Geometry:** Proportions based on ancient architectural principles
+- **Directional Significance:** Proper orientation for spiritual practices
+- **Material Symbolism:** Stone for permanence, marble for purity, gold for divine energy
+- **Interior-Exterior Flow:** Transition from worldly exterior to sacred interior space
 
-### Visual Elements to Notice
-- **Material variety**: Different surfaces (stone, marble, gold, crystal) 
-- **Lighting effects**: Torch flames, mystical glows, sunlight streaming
-- **Architectural details**: Pillar capitals, altar tiers, decorative elements
-- **Atmospheric elements**: Floating orbs, incense effects, sacred pools
-- **Depth and scale**: Background elements creating sense of space
+### Lighting Symbolism
+- **Warm Interior Light:** Represents divine presence and spiritual illumination
+- **Cool Exterior Light:** Represents the material world and earthly concerns
+- **Gradient Transitions:** Symbolic journey from material to spiritual realms
 
-The temple scenes demonstrate the full capabilities of the GPU raytracer with complex geometry, rich materials, advanced lighting, and real-time performance optimization.
+## Development and Customization
+
+### Adding Elements to Temple Scenes
+The temple scenes support the full range of raytracer features:
+
+```
+# Add decorative spheres
+sphere -1.5 1 1.5  0.3  gold
+
+# Add atmospheric lighting
+point_light 0 3 0  1.2 1.0 0.8  0.1
+```
+
+### Creating Your Own Temple Scene
+1. Load the temple OBJ: `load_obj temple.obj temple_stone`
+2. Add decorative elements (spheres)
+3. Set up appropriate materials and lighting
+4. Position camera for optimal viewing angle
+
+The temple scenes demonstrate the full capabilities of the raytracer while providing an immersive cultural and architectural experience.

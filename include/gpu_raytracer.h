@@ -79,6 +79,19 @@ struct GPULight {
     float padding3[2];
 };
 
+struct alignas(16) GPUCylinder {
+    Vec3 base_center;    // Base center position
+    float radius;        // Cylinder radius
+    Vec3 axis;           // Cylinder axis (normalized)
+    float height;        // Cylinder height
+    int material_id;     // Material ID
+    float _padding[3];   // Explicit padding for alignment
+    
+    GPUCylinder() = default;
+    GPUCylinder(const Vec3& base, const Vec3& ax, float r, float h, int mat_id) noexcept
+        : base_center(base), radius(r), axis(ax), height(h), material_id(mat_id), _padding{0, 0, 0} {}
+};
+
 class GPURayTracer {
 private:
     GLuint compute_shader;
@@ -88,11 +101,12 @@ private:
     GLuint material_buffer;
     GLuint sphere_buffer;
     GLuint triangle_buffer;       // Triangle buffer
+    GLuint cylinder_buffer;       // Cylinder buffer
     GLuint camera_buffer;
     GLuint light_buffer;
     
     int window_width, window_height;
-    int num_materials, num_spheres, num_triangles, num_lights;
+    int num_materials, num_spheres, num_triangles, num_cylinders, num_lights;
     Vec3 ambient_light;
     int frame_count;              // For temporal accumulation
     bool reset_accumulation;      // Reset flag for camera movement

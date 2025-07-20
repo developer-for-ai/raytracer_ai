@@ -5,25 +5,81 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2025-07-20
-
-### Removed
-- **Scene file cleanup**: Removed 12 redundant and obsolete scene files
-  - Removed duplicate temple scenes (temple_complete, temple_optimized, temple_immersive, etc.)
-  - Removed basic scene duplicates (scene1, advanced_scene, lit_scene, realtime)
-  - Kept only essential, unique scene files (6 total)
-- **Documentation cleanup**: Removed 5 obsolete documentation files
-  - Removed CODE_REVIEW_SUMMARY.md, PROJECT_SUMMARY.md, GIT_SETUP.md
-  - Removed empty.scene, outdated benchmark.sh
-- **Updated all references**: Fixed all documentation to reference only existing files
+## [Unreleased]
 
 ### Added
-- **SCENES_REFERENCE.md**: Comprehensive guide to all remaining scene files
-- **Enhanced tetrahedron_view.scene**: Added proper material and load_obj command
+- **Advanced Noise Reduction**: Comprehensive denoising system for cleaner images
+  - Stratified/jittered sampling for better pixel coverage
+  - Cosine-weighted importance sampling for Lambertian materials  
+  - Temporal accumulation with automatic reset on camera movement
+  - Improved random number generation (Xorshift128+ with PCG hashing)
+  - Russian roulette termination for energy conservation
+  - Enhanced tone mapping and gamma correction
 
-### Enhanced  
+### Improved
+- **Interactive Quality**: Increased default samples to 4 per frame and ray depth to 10
+- **Material Rendering**: Better dielectric materials with Schlick approximation
+- **GPU Performance**: Optimized shader buffer layout and memory usage
+- **Real-time Experience**: Progressive quality improvement when camera is stationary
+
+### Technical Details
+- Added accumulation texture buffer for temporal denoising
+- Implemented blue noise-like sampling distribution
+- Enhanced material scattering with importance sampling
+- Automatic accumulation buffer reset on camera movement
+- Better convergence characteristics at low sample counts
+
+### Planned Features
+- Advanced denoising algorithms for cleaner images at lower sample counts
+- Volumetric rendering for atmospheric effects  
+- HDR environment mapping for realistic lighting
+- Live material editing during interactive sessions
+- Scene hot-reloading for rapid development
+- Multi-GPU support for faster rendering
+- OptiX backend for NVIDIA RTX acceleration
+- Web-based interface for cloud rendering
+
+## [1.1.0] - 2025-07-20
+
+### Added
+- **Enhanced Comment Support**: Robust inline comment handling
+  - Comments now allowed anywhere in OBJ and scene files
+  - Improved parser with `strip_comments` helper function
+  - Better error handling and file documentation support
+- **Parser Code Refactoring**: Eliminated duplicate code with helper functions
+  - New helper functions: `parse_face_indices`, `triangulate_face`, `update_bounds`, `setup_camera_from_bounds`
+  - Centralized face statistics tracking with `FaceStatistics` struct
+  - Reduced code duplication and improved maintainability
+
+### Enhanced
+- **OBJ Parsing**: Improved statistics logging and quad triangulation
+  - Clear statistics: vertices, faces (triangles/quads/polygons), triangles created
+  - Robust vertex index validation and error handling
+  - Proper face winding for consistent rendering
+- **Scene Loading**: Better error messages and validation
+  - More descriptive error messages with line numbers
+  - Improved material validation and undefined material detection
+- **Temple Interior Access**: Redesigned temple OBJ with proper doorways
+  - Front entrance doorway for interior exploration
+  - Walkable interior space with proper floor and wall geometry
+  - Improved temple architecture with base platform, main hall, and shikhara roof
+
+### Temple Scenes
+- **`temple_scene.scene`** - Indian temple scene with OBJ geometry, multiple materials, and advanced lighting  
+- **`temple_sacred.scene`** - Atmospheric temple scene with mystical lighting
+
+### Removed
+- **Scene file cleanup**: Removed redundant and obsolete scene files
+  - Removed duplicate temple scenes and test files
+  - Removed basic scene duplicates 
+  - Kept only essential, unique scene files
+- **Documentation cleanup**: Removed obsolete documentation files
+- **Updated all references**: Fixed all documentation to reference only existing files
+
+### Enhanced
 - **Documentation accuracy**: All examples and references now point to existing files
 - **Streamlined project**: Reduced file count while maintaining all functionality
+- **Temple OBJ models**: Updated temple architecture with proper interior access
 
 ## [1.0.2] - 2025-07-20
 
@@ -94,46 +150,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # GPU headless rendering
 ./build/bin/RayTracerGPU examples/cornell_box.scene -o output.ppm -s 16 -w 800 -h 600
 ```
-
-## [Unreleased]
-
-### Added
-- **Advanced Noise Reduction**: Comprehensive denoising system for cleaner images
-  - Stratified/jittered sampling for better pixel coverage
-  - Cosine-weighted importance sampling for Lambertian materials  
-  - Temporal accumulation with automatic reset on camera movement
-  - Improved random number generation (Xorshift128+ with PCG hashing)
-  - Russian roulette termination for energy conservation
-  - Enhanced tone mapping and gamma correction
-
-### Improved
-- **Interactive Quality**: Increased default samples to 4 per frame and ray depth to 10
-- **Material Rendering**: Better dielectric materials with Schlick approximation
-- **GPU Performance**: Optimized shader buffer layout and memory usage
-- **Real-time Experience**: Progressive quality improvement when camera is stationary
-
-### Technical Details
-- Added accumulation texture buffer for temporal denoising
-- Implemented blue noise-like sampling distribution
-- Enhanced material scattering with importance sampling
-- Automatic accumulation buffer reset on camera movement
-- Better convergence characteristics at low sample counts
-
-### Planned Features
-- Denoising algorithms for cleaner images at lower sample counts
-- Volumetric rendering for atmospheric effects
-- HDR environment mapping
-- Live material editing during interactive sessions
-- Scene hot-reloading for rapid development
-- Multi-GPU support for faster rendering
-- OptiX backend for NVIDIA RTX acceleration
-- Web-based interface for cloud rendering
-
-### Known Issues
-- PNG output falls back to PPM format (libpng integration needed)
-- Limited to triangle and sphere primitives
-- No texture mapping support yet
-- Single-threaded GPU raytracer (could use multiple compute dispatches)
 
 ## Contributing
 

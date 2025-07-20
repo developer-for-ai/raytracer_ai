@@ -7,10 +7,10 @@ This ray tracer implements modern rendering techniques optimized for performance
 ### Core Components
 
 1. **GPU Ray Tracing**: OpenGL compute shader pipeline for massive parallelization
-2. **Dual Geometry Support**: Both spheres and triangular meshes in unified pipeline  
+2. **Multi-Geometry Support**: Spheres and triangular meshes in unified pipeline  
 3. **Ray-Sphere Intersection**: Optimized quadratic solver with early termination
 4. **Ray-Triangle Intersection**: Möller-Trumbore algorithm for mesh geometry
-5. **OBJ File Loading**: Full 3D mesh import with automatic camera positioning
+5. **OBJ File Loading**: Full 3D mesh import with quad triangulation and automatic camera positioning
 6. **Advanced Material System**: 6 physically-based material types (lambertian, metal, dielectric, emissive, glossy, subsurface)
 7. **Multi-Light Support**: Point, spot, area, and ambient lighting with soft shadows
 8. **Scene File System**: Human-readable scene format with `load_obj` command support
@@ -19,7 +19,7 @@ This ray tracer implements modern rendering techniques optimized for performance
 
 - **GPU Compute Shader Architecture**: OpenGL 4.3 compute shaders for massive parallel ray processing
 - **Efficient Memory Layout**: Optimized GPU buffer organization for materials, geometry, and lights
-- **Triangle Mesh Performance**: Handles 200+ triangles at 15+ FPS with Möller-Trumbore intersection
+- **Triangle Mesh Performance**: Handles triangle meshes at 15+ FPS with Möller-Trumbore intersection
 - **Temporal Accumulation**: Progressive quality improvement when camera is stationary
 - **Smart Camera Management**: Automatic camera positioning for OBJ files prevents "empty screen" issues
 - **Stratified Sampling**: Better pixel coverage and reduced noise in ray distribution
@@ -205,7 +205,7 @@ bool hit_triangle(Triangle tri, Ray ray, float t_min, float t_max, out HitRecord
 ```
 
 ### OBJ File Support
-The parser now handles standard OBJ files with:
+The parser handles standard OBJ files with:
 - Vertex definitions (`v x y z`)
 - Face definitions (`f v1 v2 v3`)
 - Triangle fan tessellation for N-gons

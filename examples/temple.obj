@@ -1,0 +1,93 @@
+# Simple Solid Temple - Complete Quad Walls
+# All faces wound counter-clockwise when viewed from outside
+
+# === BASE PLATFORM (solid box) ===
+v -6.0 0.0 -6.0   # 1
+v  6.0 0.0 -6.0   # 2  
+v  6.0 0.0  6.0   # 3
+v -6.0 0.0  6.0   # 4
+v -6.0 0.5 -6.0   # 5
+v  6.0 0.5 -6.0   # 6
+v  6.0 0.5  6.0   # 7
+v -6.0 0.5  6.0   # 8
+
+# Platform faces
+f 1 2 6 5   # front face
+f 2 3 7 6   # right face  
+f 3 4 8 7   # back face
+f 4 1 5 8   # left face
+f 5 6 7 8   # top face
+f 4 3 2 1   # bottom face
+
+# === MAIN WALLS (solid box) ===
+v -3.0 0.5 -3.0   # 9
+v  3.0 0.5 -3.0   # 10
+v  3.0 0.5  3.0   # 11  
+v -3.0 0.5  3.0   # 12
+v -3.0 4.0 -3.0   # 13
+v  3.0 4.0 -3.0   # 14
+v  3.0 4.0  3.0   # 15
+v -3.0 4.0  3.0   # 16
+
+# Main wall faces
+f  9 10 14 13  # front wall
+f 10 11 15 14  # right wall
+f 11 12 16 15  # back wall
+f 12  9 13 16  # left wall  
+f 13 14 15 16  # roof
+f 12 11 10  9  # floor
+
+# === TOWER (solid box) ===
+v -2.0 4.0 -2.0   # 17
+v  2.0 4.0 -2.0   # 18
+v  2.0 4.0  2.0   # 19
+v -2.0 4.0  2.0   # 20
+v -2.0 7.0 -2.0   # 21
+v  2.0 7.0 -2.0   # 22
+v  2.0 7.0  2.0   # 23
+v -2.0 7.0  2.0   # 24
+
+# Tower faces
+f 17 18 22 21  # front wall
+f 18 19 23 22  # right wall
+f 19 20 24 23  # back wall
+f 20 17 21 24  # left wall
+f 21 22 23 24  # top
+f 20 19 18 17  # bottom
+
+# === FRONT PILLARS ===
+# Left pillar
+v -4.5 0.5 -4.5   # 25
+v -3.5 0.5 -4.5   # 26
+v -3.5 0.5 -3.5   # 27
+v -4.5 0.5 -3.5   # 28
+v -4.5 4.0 -4.5   # 29
+v -3.5 4.0 -4.5   # 30
+v -3.5 4.0 -3.5   # 31
+v -4.5 4.0 -3.5   # 32
+
+# Left pillar faces
+f 25 26 30 29  # front
+f 26 27 31 30  # right
+f 27 28 32 31  # back
+f 28 25 29 32  # left
+f 29 30 31 32  # top
+f 28 27 26 25  # bottom
+
+# Right pillar
+v  3.5 0.5 -4.5   # 33
+v  4.5 0.5 -4.5   # 34
+v  4.5 0.5 -3.5   # 35
+v  3.5 0.5 -3.5   # 36
+v  3.5 4.0 -4.5   # 37
+v  4.5 4.0 -4.5   # 38
+v  4.5 4.0 -3.5   # 39
+v  3.5 4.0 -3.5   # 40
+
+# Right pillar faces
+f 33 34 38 37  # front
+f 34 35 39 38  # right
+f 35 36 40 39  # back
+f 36 33 37 40  # left
+f 37 38 39 40  # top
+f 36 35 34 33  # bottom

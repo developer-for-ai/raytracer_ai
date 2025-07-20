@@ -1,0 +1,13 @@
+# Temple simple scene with proper camera positioning
+# Camera positioned to view the temple from an angle
+camera 3.0 2.0 3.0 0.0 0.0 0.0 0.0 1.0 0.0 45.0 1.5
+
+# Nice sky background
+background 0.5 0.7 1.0
+
+# Lighting - point light above and to the side
+point_light 4.0 4.0 4.0 1.0 1.0 1.0 0.5
+
+# Load the temple_simple.obj file with proper material
+material simple_temple_mat lambertian 0.7 0.5 0.3
+load_obj examples/temple_simple.obj simple_temple_mat

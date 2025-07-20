@@ -1,6 +1,32 @@
 # 🚀 High-Performance Interactive GPU Ray Tracer
 
-A complete, production-ready **interactive GPU ray tracing system** with real-time performance and offline rendering capabilities. This implementation demonstrates cutting-edge computer graphics techniques optimized for maximum performance on modern GPU hardware with OpenGL compute shaders.
+A complete, production-ready **interactive GPU ray tracing system** with real-time performance and offline rendering capabilities. This implementation demonstrat#### **temple_scene.scene** - C- 🔧 **Advanced geometry** with quad walls, proper face ├── examples/            # Scene files showcasing features
+│   ├── cornell_box.scene    # Classic Cornell Box reference
+│   ├── lighting_demo.scene  # Complete lighting showcase
+│   ├── materials_showcase.scene # All material types
+│   ├── showcase.scene       # Overall feature demonstration
+│   ├── temple_scene.scene   # Temple with OBJ architecture
+│   ├── temple_sacred.scene  # Atmospheric temple scene
+│   ├── simple_temple_view.scene # Simple OBJ loading demo
+│   ├── temple.obj           # Indian temple architecture
+│   └── temple_simple.obj    # Simplified temple modelnd solid structure
+- ⚡ **Performance optimized** for real-time exploration at 15+ FPS with triangle mesheslete Architectural Showcase
+```bash
+./build/bin/RayTracerGPU examples/temple_scene.scene
+```
+
+#### **temple_sacred.scene** - Mystical Atmosphere
+```bash
+./build/bin/RayTracerGPU examples/temple_sacred.scene
+```
+
+**Temple Features:**
+- 🏛️ **Authentic Indian architecture** with proper doorways and interior access
+- 🚶 **Walkable interior** - Enter through the front doorway and explore inside
+- 💎 **Rich materials** including temple stone, marble, gold, and decorative elements
+- 🌅 **Atmospheric lighting** with warm interior and cool exterior lighting
+- 🔧 **Advanced geometry** with quad walls, proper face winding, and solid structure
+- ⚡ **Performance optimized** for real-time exploration at 15+ FPS with triangle meshesputer graphics techniques optimized for maximum performance on modern GPU hardware with OpenGL compute shaders.
 
 ## ✨ GPU-Accelerated Architecture
 
@@ -37,15 +63,17 @@ A complete, production-ready **interactive GPU ray tracing system** with real-ti
 - **Subsurface**: Materials with subsurface scattering for realistic skin, wax, etc.
 
 ### **File Format Support**  
-- **OBJ files**: Full 3D mesh support with triangle rendering
+- **OBJ files**: Full 3D mesh support with triangle and quad rendering
 - **Custom scene format**: Human-readable text files with full material and lighting control
 - **PPM output**: Uncompressed image format for maximum quality and compatibility
+- **Inline comments**: Support for comments in both OBJ and scene files for better documentation
 
 ### **Geometry Support**
 - **Spheres**: Perfect spherical primitives with ray-sphere intersection
 - **Triangles**: Full triangle mesh support with Möller-Trumbore intersection
-- **OBJ meshes**: Import 3D models from standard OBJ files
-- **Complex geometry**: Tetrahedra, cubes, and any triangulated mesh
+- **OBJ meshes**: Import 3D models from standard OBJ files with automatic triangulation
+- **Complex geometry**: Tetrahedra, cubes, temples, and any triangulated mesh
+- **Quad support**: Automatic triangulation of quad faces from OBJ files
 
 ## 💡 **Advanced Lighting System**
 
@@ -157,8 +185,8 @@ When running the GPU raytracer:
 # Comprehensive lighting demonstration
 ./build/bin/RayTracerGPU examples/lighting_demo.scene
 
-# Complete temple scene with OBJ geometry
-./build/bin/RayTracerGPU examples/temple_final_complete.scene
+# Temple with atmospheric lighting
+./build/bin/RayTracerGPU examples/temple_sacred.scene
 ```
 
 ### High-Quality File Output (Headless)
@@ -179,7 +207,7 @@ When running the GPU raytracer:
 ### OBJ File Rendering
 ```bash
 # Load and render 3D meshes directly
-./build/bin/RayTracerGPU examples/tetrahedron.obj
+./build/bin/RayTracerGPU examples/temple.obj
 
 # Custom OBJ files with proper camera positioning
 ./build/bin/RayTracerGPU your_model.obj -w 1920 -h 1080
@@ -195,36 +223,35 @@ When running the GPU raytracer:
 2. **materials_showcase.scene**: Comprehensive demonstration of all material types
 3. **lighting_demo.scene**: Complete showcase of all lighting features (point, spot, area, ambient)
 4. **showcase.scene**: Overall feature demonstration with balanced complexity
-5. **temple_final_complete.scene**: Indian temple scene with OBJ geometry, multiple materials, and advanced lighting
-6. **tetrahedron_view.scene**: Simple OBJ loading demo using tetrahedron.obj
+5. **temple_scene.scene**: Indian temple scene with OBJ geometry, multiple materials, and advanced lighting
+6. **temple_sacred.scene**: Atmospheric temple scene with mystical lighting
+7. **simple_temple_view.scene**: Simple OBJ loading demo using temple_simple.obj
 
 ### 3D Models (.obj)
-7. **tetrahedron.obj**: Simple 4-triangle tetrahedron for testing triangle rendering
-8. **indian_temple.obj**: Detailed Indian-style temple architecture with 294 triangles
-9. **triangle_grid.obj**: Performance testing mesh with 12 triangles
-10. **large_triangle_grid.obj**: Large performance test mesh with 108 triangles
-11. **massive_triangle_grid.obj**: Performance test mesh with 432 triangles
+8. **temple.obj**: Detailed Indian-style temple architecture with interior access
+9. **temple_simple.obj**: Simplified temple structure for performance testing
 
 ### 🚶 Temple Exploration Guide
 The Indian temple scenes offer immersive architectural exploration:
 
 ```bash
-# Interactive temple exploration (best experience - automatic camera positioning)
-./build/bin/RayTracerGPU examples/indian_temple.obj
+# Interactive temple exploration with interior access
+./build/bin/RayTracerGPU examples/temple_interior.scene
 
-# Complete temple with all features (OBJ + decorations + lighting)
-./build/bin/RayTracerGPU examples/temple_final_complete.scene
+# Temple with proper doorways and walkable spaces
+./build/bin/RayTracerGPU examples/temple.obj
 
-# High-quality temple renders
-./build/bin/RayTracerGPU examples/temple_final_complete.scene -o temple.ppm -w 1600 -h 1200 -s 8
+# Complete temple scene with materials and lighting
+./build/bin/RayTracerGPU examples/temple_scene.scene -o temple.ppm -w 1600 -h 1200 -s 8
 ```
 
 **Temple Features:**
-- 🏛️ **Authentic Indian architecture** with pillars, altar, and sacred spaces
-- 🕯️ **Advanced lighting system** with torches, mystical glows, and sunlight
-- 💎 **Rich materials** including marble, gold, bronze, sacred crystals, and gems
-- 🚶 **Walkable interior** with floor planes and optimized geometry
-- 🌟 **Atmospheric elements** including floating orbs, incense, and divine lighting
+- 🏛️ **Authentic Indian architecture** with proper doorways and interior access
+- � **Walkable interior** - Enter through the front doorway and explore inside
+- 💎 **Rich materials** including temple stone, marble, gold, and decorative elements
+- �️ **Atmospheric lighting** with warm interior and cool exterior lighting
+- 🔧 **Advanced geometry** with quad walls, proper face winding, and solid structure
+- 🎨 **Cylinder support** for pillars and decorative elements
 - ⚡ **Performance optimized** for real-time exploration at 15+ FPS with 200+ triangles
 
 ### Output Examples  
@@ -283,10 +310,11 @@ raytracer_ai/
 │   ├── lighting_demo.scene  # Complete lighting showcase
 │   ├── materials_showcase.scene # All material types
 │   ├── showcase.scene       # Overall feature demonstration
-│   ├── temple_final_complete.scene # Temple with OBJ architecture
+│   ├── temple_scene.scene   # Temple with OBJ architecture
+│   ├── temple_sacred.scene  # Atmospheric temple scene
 │   ├── tetrahedron_view.scene # Simple OBJ loading demo
-│   ├── tetrahedron.obj      # 4-triangle test model
-│   └── indian_temple.obj    # 294-triangle temple architecture
+│   ├── temple.obj           # Indian temple architecture
+│   └── temple_simple.obj    # Simplified temple model
 ├── build.sh            # Automated build script
 ├── CMakeLists.txt      # Build configuration
 └── README.md           # This file

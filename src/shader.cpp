@@ -170,6 +170,15 @@ struct Triangle {
     float pad2;
 };
 
+struct Cylinder {
+    vec3 base_center;
+    float radius;
+    vec3 axis;
+    float height;
+    int material_id;
+    float padding[3];
+};
+
 struct GPUCamera {
     vec3 position;
     float padding1;
@@ -221,6 +230,10 @@ layout(std430, binding = 5) buffer LightBuffer {
 
 layout(std430, binding = 6) buffer TriangleBuffer {
     Triangle triangles[];
+};
+
+layout(std430, binding = 7) buffer CylinderBuffer {
+    Cylinder cylinders[];
 };
 
 uniform int max_depth;
@@ -391,6 +404,53 @@ bool hit_triangle(Triangle tri, Ray ray, float t_min, float t_max, out HitRecord
     return true;
 }
 
+bool hit_cylinder(Cylinder cyl, Ray ray, float t_min, float t_max, out HitRecord rec) {
+    // Transform ray to cylinder coordinate system
+    vec3 oc = ray.origin - cyl.base_center;
+    
+    // Project ray direction and oc onto plane perpendicular to cylinder axis
+    vec3 ray_perp = ray.direction - dot(ray.direction, cyl.axis) * cyl.axis;
+    vec3 oc_perp = oc - dot(oc, cyl.axis) * cyl.axis;
+    
+    // Quadratic equation coefficients for intersection with infinite cylinder
+    float a = dot(ray_perp, ray_perp);
+    float half_b = dot(oc_perp, ray_perp);
+    float c = dot(oc_perp, oc_perp) - cyl.radius * cyl.radius;
+    
+    float discriminant = half_b * half_b - a * c;
+    if (discriminant < 0.0) return false;
+    
+    float sqrtd = sqrt(discriminant);
+    float t1 = (-half_b - sqrtd) / a;
+    float t2 = (-half_b + sqrtd) / a;
+    
+    // Check both intersection points
+    for (int i = 0; i < 2; i++) {
+        float t = (i == 0) ? t1 : t2;
+        if (t >= t_min && t <= t_max) {
+            vec3 hit_point = ray.origin + t * ray.direction;
+            vec3 hit_local = hit_point - cyl.base_center;
+            float height_along_axis = dot(hit_local, cyl.axis);
+            
+            // Check if intersection is within cylinder height
+            if (height_along_axis >= 0.0 && height_along_axis <= cyl.height) {
+                rec.t = t;
+                rec.point = hit_point;
+                
+                // Calculate surface normal (perpendicular to axis, pointing outward)
+                vec3 radial_component = hit_local - height_along_axis * cyl.axis;
+                vec3 outward_normal = normalize(radial_component);
+                rec.front_face = dot(ray.direction, outward_normal) < 0.0;
+                rec.normal = rec.front_face ? outward_normal : -outward_normal;
+                rec.material_id = cyl.material_id;
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
 bool hit_world(Ray ray, float t_min, float t_max, out HitRecord rec) {
     HitRecord temp_rec;
     bool hit_anything = false;
@@ -399,6 +459,15 @@ bool hit_world(Ray ray, float t_min, float t_max, out HitRecord rec) {
     // Test spheres first (usually fewer and faster)
     for (int i = 0; i < spheres.length(); i++) {
         if (hit_sphere(spheres[i], ray, t_min, closest_so_far, temp_rec)) {
+            hit_anything = true;
+            closest_so_far = temp_rec.t;
+            rec = temp_rec;
+        }
+    }
+    
+    // Test cylinders
+    for (int i = 0; i < cylinders.length(); i++) {
+        if (hit_cylinder(cylinders[i], ray, t_min, closest_so_far, temp_rec)) {
             hit_anything = true;
             closest_so_far = temp_rec.t;
             rec = temp_rec;

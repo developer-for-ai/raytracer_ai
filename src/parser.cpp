@@ -6,6 +6,26 @@
 #include <algorithm>
 #include <map>
 
+// Implementation of FaceStatistics methods
+void Parser::FaceStatistics::update_face_type(size_t face_size) {
+    if (face_size == 3) {
+        triangle_faces++;
+    } else if (face_size == 4) {
+        quad_faces++;
+    } else {
+        polygon_faces++;
+    }
+}
+
+void Parser::FaceStatistics::log_statistics(size_t vertex_count) const {
+    ErrorHandling::Logger::info("OBJ parsing: " + std::to_string(vertex_count) + " vertices, " +
+                               std::to_string(triangle_faces + quad_faces + polygon_faces) + " faces (" +
+                               std::to_string(triangle_faces) + " triangles, " +
+                               std::to_string(quad_faces) + " quads, " +
+                               std::to_string(polygon_faces) + " polygons) -> " +
+                               std::to_string(total_triangles_created) + " triangles created");
+}
+
 bool Parser::parse_scene_file(const std::string& filename, Scene& scene) {
     // Determine file type by extension
     size_t dot_pos = filename.find_last_of('.');
@@ -28,6 +48,105 @@ bool Parser::parse_scene_file(const std::string& filename, Scene& scene) {
 }
 
 bool Parser::parse_obj_file(const std::string& filename, Scene& scene) {
+    // Create default material for standalone OBJ files
+    auto default_material = std::make_shared<Material>(MaterialType::LAMBERTIAN, Color(0.8f, 0.8f, 0.8f));
+    scene.add_material(default_material);
+    int material_id = 0;  // Use default material
+    
+    // Call the main OBJ parser with camera setup enabled
+    return parse_obj_file_with_material(filename, scene, material_id, true);
+}
+
+// Helper function to parse vertex indices from a face line
+std::vector<int> Parser::parse_face_indices(std::istringstream& iss) {
+    std::vector<int> face_indices;
+    std::string vertex_data;
+    
+    while (iss >> vertex_data) {
+        // Stop parsing if we hit a comment (shouldn't happen with strip_comments, but just in case)
+        if (vertex_data[0] == '#') {
+            break;
+        }
+        
+        // Parse vertex/texture/normal format (v/vt/vn)
+        size_t slash_pos = vertex_data.find('/');
+        std::string vertex_str = (slash_pos != std::string::npos) ? 
+                               vertex_data.substr(0, slash_pos) : vertex_data;
+        
+        try {
+            int vertex_index = std::stoi(vertex_str) - 1; // OBJ indices are 1-based
+            if (vertex_index < 0) {
+                ErrorHandling::Logger::warning("Invalid negative vertex index in OBJ file, skipping face");
+                face_indices.clear();
+                break;
+            }
+            face_indices.push_back(vertex_index);
+        } catch (const std::exception& e) {
+            ErrorHandling::Logger::warning("Invalid vertex index '" + vertex_str + "' in OBJ file, skipping face");
+            face_indices.clear();
+            break;
+        }
+    }
+    
+    return face_indices;
+}
+
+// Helper function to triangulate a face and add triangles to the scene
+void Parser::triangulate_face(const std::vector<int>& face_indices, 
+                             const std::vector<Vec3>& vertices,
+                             Scene& scene, 
+                             int material_id, 
+                             FaceStatistics& stats) {
+    if (face_indices.size() < 3) {
+        return;
+    }
+    
+    // Track face type statistics
+    stats.update_face_type(face_indices.size());
+    
+    // Fan triangulation for polygons with more than 3 vertices
+    for (size_t i = 1; i < face_indices.size() - 1; i++) {
+        if (static_cast<size_t>(face_indices[0]) < vertices.size() && 
+            static_cast<size_t>(face_indices[i]) < vertices.size() && 
+            static_cast<size_t>(face_indices[i + 1]) < vertices.size()) {
+            scene.add_object(std::make_shared<Triangle>(
+                vertices[face_indices[0]],
+                vertices[face_indices[i]],
+                vertices[face_indices[i + 1]],
+                material_id
+            ));
+            stats.total_triangles_created++;
+        } else {
+            ErrorHandling::Logger::warning("Vertex index out of bounds in OBJ file, skipping triangle");
+        }
+    }
+}
+
+// Helper function to update bounding box for camera positioning
+void Parser::update_bounds(const Vec3& vertex, Vec3& min_bounds, Vec3& max_bounds) {
+    min_bounds.x = std::min(min_bounds.x, vertex.x);
+    min_bounds.y = std::min(min_bounds.y, vertex.y);
+    min_bounds.z = std::min(min_bounds.z, vertex.z);
+    max_bounds.x = std::max(max_bounds.x, vertex.x);
+    max_bounds.y = std::max(max_bounds.y, vertex.y);
+    max_bounds.z = std::max(max_bounds.z, vertex.z);
+}
+
+// Helper function to set up camera based on model bounds
+void Parser::setup_camera_from_bounds(Scene& scene, const Vec3& min_bounds, const Vec3& max_bounds) {
+    Vec3 center = (min_bounds + max_bounds) * 0.5f;
+    Vec3 size = max_bounds - min_bounds;
+    float max_dimension = std::max({size.x, size.y, size.z});
+    
+    // Position camera to view the entire model
+    Vec3 camera_pos = center + Vec3(0.0f, max_dimension * 0.3f, max_dimension * 1.5f);
+    Vec3 camera_target = center;
+    Vec3 camera_up(0.0f, 1.0f, 0.0f);
+    
+    scene.camera = Camera(camera_pos, camera_target, camera_up, 50.0f, 16.0f/9.0f);
+}
+
+bool Parser::parse_obj_file_with_material(const std::string& filename, Scene& scene, int material_id, bool setup_camera) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         ErrorHandling::Logger::error("Could not open file: " + filename);
@@ -36,19 +155,23 @@ bool Parser::parse_obj_file(const std::string& filename, Scene& scene) {
     
     std::vector<Vec3> vertices;
     std::string line;
+    FaceStatistics stats;
     
-    // Default material
-    auto default_material = std::make_shared<Material>(MaterialType::LAMBERTIAN, Color(0.8f, 0.8f, 0.8f));
-    scene.add_material(default_material);
-    
-    // Parse vertices first to determine bounds for camera positioning
+    // Bounds tracking for camera positioning
     Vec3 min_bounds{1000000.0f, 1000000.0f, 1000000.0f};
     Vec3 max_bounds{-1000000.0f, -1000000.0f, -1000000.0f};
     
     while (std::getline(file, line)) {
-        std::istringstream iss(line);
+        // Strip comments from the line first
+        std::string clean_line = strip_comments(line);
+        std::istringstream iss(clean_line);
         std::string prefix;
         iss >> prefix;
+        
+        // Skip empty lines
+        if (prefix.empty()) {
+            continue;
+        }
         
         if (prefix == "v") {
             // Vertex
@@ -57,141 +180,27 @@ bool Parser::parse_obj_file(const std::string& filename, Scene& scene) {
             Vec3 vertex(x, y, z);
             vertices.push_back(vertex);
             
-            // Update bounds
-            min_bounds.x = std::min(min_bounds.x, x);
-            min_bounds.y = std::min(min_bounds.y, y);
-            min_bounds.z = std::min(min_bounds.z, z);
-            max_bounds.x = std::max(max_bounds.x, x);
-            max_bounds.y = std::max(max_bounds.y, y);
-            max_bounds.z = std::max(max_bounds.z, z);
+            // Update bounds for camera positioning
+            if (setup_camera) {
+                update_bounds(vertex, min_bounds, max_bounds);
+            }
         } else if (prefix == "f") {
-            // Face - simple triangulation (assumes triangular faces)
-            std::vector<int> face_indices;
-            std::string vertex_data;
+            // Parse face indices
+            std::vector<int> face_indices = parse_face_indices(iss);
             
-            while (iss >> vertex_data) {
-                // Parse vertex/texture/normal format (v/vt/vn)
-                size_t slash_pos = vertex_data.find('/');
-                std::string vertex_str = (slash_pos != std::string::npos) ? 
-                                       vertex_data.substr(0, slash_pos) : vertex_data;
-                
-                try {
-                    int vertex_index = std::stoi(vertex_str) - 1; // OBJ indices are 1-based
-                    if (vertex_index < 0) {
-                        ErrorHandling::Logger::warning("Invalid negative vertex index in OBJ file, skipping face");
-                        face_indices.clear();
-                        break;
-                    }
-                    face_indices.push_back(vertex_index);
-                } catch (const std::exception& e) {
-                    ErrorHandling::Logger::warning("Invalid vertex index '" + vertex_str + "' in OBJ file, skipping face");
-                    face_indices.clear();
-                    break;
-                }
-            }
-            
-            // Create triangles (fan triangulation for polygons with more than 3 vertices)
-            if (face_indices.size() >= 3) {
-                for (size_t i = 1; i < face_indices.size() - 1; i++) {
-                    if (static_cast<size_t>(face_indices[0]) < vertices.size() && 
-                        static_cast<size_t>(face_indices[i]) < vertices.size() && 
-                        static_cast<size_t>(face_indices[i + 1]) < vertices.size()) {
-                        scene.add_object(std::make_shared<Triangle>(
-                            vertices[face_indices[0]],
-                            vertices[face_indices[i]],
-                            vertices[face_indices[i + 1]],
-                            0
-                        ));
-                    } else {
-                        ErrorHandling::Logger::warning("Vertex index out of bounds in OBJ file, skipping triangle");
-                    }
-                }
-            }
+            // Triangulate and add to scene
+            triangulate_face(face_indices, vertices, scene, material_id, stats);
         }
     }
     
-    // Set up camera based on model bounds for OBJ files
-    if (vertices.size() > 0) {
-        Vec3 center = (min_bounds + max_bounds) * 0.5f;
-        Vec3 size = max_bounds - min_bounds;
-        float max_dimension = std::max({size.x, size.y, size.z});
-        
-        // Position camera to view the entire model
-        Vec3 camera_pos = center + Vec3(0.0f, max_dimension * 0.3f, max_dimension * 1.5f);
-        Vec3 camera_target = center;
-        Vec3 camera_up(0.0f, 1.0f, 0.0f);
-        
-        scene.camera = Camera(camera_pos, camera_target, camera_up, 50.0f, 16.0f/9.0f);
+    // Set up camera based on model bounds if requested
+    if (setup_camera && vertices.size() > 0) {
+        setup_camera_from_bounds(scene, min_bounds, max_bounds);
     }
     
-    return true;
-}
-
-bool Parser::parse_obj_file_with_material(const std::string& filename, Scene& scene, int material_id) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        ErrorHandling::Logger::error("Could not open file: " + filename);
-        return false;
-    }
+    // Log OBJ parsing statistics
+    stats.log_statistics(vertices.size());
     
-    std::vector<Vec3> vertices;
-    std::string line;
-    
-    while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        std::string prefix;
-        iss >> prefix;
-        
-        if (prefix == "v") {
-            // Vertex
-            float x, y, z;
-            iss >> x >> y >> z;
-            vertices.push_back(Vec3(x, y, z));
-        } else if (prefix == "f") {
-            // Face - simple triangulation (assumes triangular faces)
-            std::vector<int> face_indices;
-            std::string vertex_data;
-            
-            while (iss >> vertex_data) {
-                // Parse vertex/texture/normal format (v/vt/vn)
-                size_t slash_pos = vertex_data.find('/');
-                std::string vertex_str = (slash_pos != std::string::npos) ? 
-                                       vertex_data.substr(0, slash_pos) : vertex_data;
-                
-                try {
-                    int vertex_index = std::stoi(vertex_str) - 1; // OBJ indices are 1-based
-                    if (vertex_index < 0) {
-                        ErrorHandling::Logger::warning("Invalid negative vertex index in OBJ file, skipping face");
-                        face_indices.clear();
-                        break;
-                    }
-                    face_indices.push_back(vertex_index);
-                } catch (const std::exception& e) {
-                    ErrorHandling::Logger::warning("Invalid vertex index '" + vertex_str + "' in OBJ file, skipping face");
-                    face_indices.clear();
-                    break;
-                }
-            }
-            
-            // Create triangles (fan triangulation for polygons with more than 3 vertices)
-            if (face_indices.size() >= 3) {
-                for (size_t i = 1; i < face_indices.size() - 1; i++) {
-                    if (static_cast<size_t>(face_indices[0]) < vertices.size() && 
-                        static_cast<size_t>(face_indices[i]) < vertices.size() && 
-                        static_cast<size_t>(face_indices[i + 1]) < vertices.size()) {
-                        scene.add_object(std::make_shared<Triangle>(
-                            vertices[face_indices[0]],
-                            vertices[face_indices[i]],
-                            vertices[face_indices[i + 1]],
-                            material_id  // Use the specified material_id instead of 0
-                        ));
-                    } else {
-                        ErrorHandling::Logger::warning("Vertex index out of bounds in OBJ file, skipping triangle");
-                    }
-                }
-            }
-        }
-    }
     return true;
 }
 
@@ -209,11 +218,14 @@ bool Parser::parse_scene_description_file(const std::string& filename, Scene& sc
     
     while (std::getline(file, line)) {
         line_number++;
-        std::istringstream iss(line);
+        
+        // Strip comments from the line first
+        std::string clean_line = strip_comments(line);
+        std::istringstream iss(clean_line);
         std::string command;
         
-        // Skip empty lines and comments
-        if (line.empty() || line[0] == '#' || line.find_first_not_of(" \t\n\r") == std::string::npos) {
+        // Skip empty lines
+        if (clean_line.empty() || clean_line.find_first_not_of(" \t\n\r") == std::string::npos) {
             continue;
         }
         
@@ -468,6 +480,41 @@ bool Parser::parse_scene_description_file(const std::string& filename, Scene& sc
             }
             
             has_valid_content = true;
+        } else if (command == "cylinder") {
+            Vec3 base_center, axis;
+            float radius, height;
+            std::string material_name;
+            if (!(iss >> base_center.x >> base_center.y >> base_center.z 
+                >> axis.x >> axis.y >> axis.z 
+                >> radius >> height >> material_name)) {
+                ErrorHandling::Logger::error("Invalid cylinder format at line " + std::to_string(line_number) + ": " + line);
+                return false;
+            }
+            
+            // Validate cylinder parameters
+            if (radius <= 0.0f) {
+                ErrorHandling::Logger::error("Cylinder radius must be positive at line " + std::to_string(line_number) + ": " + line);
+                return false;
+            }
+            if (height <= 0.0f) {
+                ErrorHandling::Logger::error("Cylinder height must be positive at line " + std::to_string(line_number) + ": " + line);
+                return false;
+            }
+            if (axis.length() < 1e-6f) {
+                ErrorHandling::Logger::error("Cylinder axis vector cannot be zero at line " + std::to_string(line_number) + ": " + line);
+                return false;
+            }
+            
+            int material_id = 0;
+            if (material_map.find(material_name) != material_map.end()) {
+                material_id = material_map[material_name];
+            } else {
+                ErrorHandling::Logger::error("Undefined material '" + material_name + "' at line " + std::to_string(line_number) + ": " + line);
+                return false;
+            }
+            
+            scene.add_object(std::make_shared<Cylinder>(base_center, axis, radius, height, material_id));
+            has_valid_content = true;
         } else {
             // Unrecognized command - this is an error
             ErrorHandling::Logger::error("Unknown command ' at line " + std::to_string(line_number) + ": " + line);
@@ -493,4 +540,13 @@ Vec3 Parser::parse_vec3(const std::string& line) {
 
 Color Parser::parse_color(const std::string& line) {
     return parse_vec3(line); // Color is just an alias for Vec3
+}
+
+// Helper function to strip comments from a line
+std::string Parser::strip_comments(const std::string& line) {
+    size_t comment_pos = line.find('#');
+    if (comment_pos != std::string::npos) {
+        return line.substr(0, comment_pos);
+    }
+    return line;
 }

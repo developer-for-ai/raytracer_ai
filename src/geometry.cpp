@@ -104,3 +104,78 @@ bool Plane::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const 
     
     return false;
 }
+
+bool Cylinder::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const {
+    // Transform ray to cylinder coordinate system
+    Vec3 oc = ray.origin - base_center;
+    
+    // Project ray direction and oc onto plane perpendicular to cylinder axis
+    Vec3 ray_perp = ray.direction - (ray.direction.dot(axis) * axis);
+    Vec3 oc_perp = oc - (oc.dot(axis) * axis);
+    
+    // Quadratic equation coefficients for intersection with infinite cylinder
+    float a = ray_perp.dot(ray_perp);
+    float half_b = oc_perp.dot(ray_perp);
+    float c = oc_perp.dot(oc_perp) - radius * radius;
+    
+    float discriminant = half_b * half_b - a * c;
+    if (discriminant < 0) return false;
+    
+    float sqrtd = std::sqrt(discriminant);
+    float t1 = (-half_b - sqrtd) / a;
+    float t2 = (-half_b + sqrtd) / a;
+    
+    // Check both intersection points
+    for (float t : {t1, t2}) {
+        if (t >= t_min && t <= t_max) {
+            Vec3 hit_point = ray.at(t);
+            Vec3 hit_local = hit_point - base_center;
+            float height_along_axis = hit_local.dot(axis);
+            
+            // Check if intersection is within cylinder height
+            if (height_along_axis >= 0 && height_along_axis <= height) {
+                rec.t = t;
+                rec.point = hit_point;
+                
+                // Calculate surface normal (perpendicular to axis, pointing outward)
+                Vec3 radial_component = hit_local - (height_along_axis * axis);
+                Vec3 outward_normal = radial_component.normalize();
+                rec.set_face_normal(ray, outward_normal);
+                rec.material_id = material_id;
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
+Vec3 Cylinder::get_min_bounds() const {
+    Vec3 top_center = base_center + axis * height;
+    
+    // Calculate bounding box that contains both circular bases
+    Vec3 r_vec(radius, radius, radius);
+    Vec3 base_min = base_center - r_vec;
+    Vec3 top_min = top_center - r_vec;
+    
+    return Vec3(
+        std::min(base_min.x, top_min.x),
+        std::min(base_min.y, top_min.y),
+        std::min(base_min.z, top_min.z)
+    );
+}
+
+Vec3 Cylinder::get_max_bounds() const {
+    Vec3 top_center = base_center + axis * height;
+    
+    // Calculate bounding box that contains both circular bases
+    Vec3 r_vec(radius, radius, radius);
+    Vec3 base_max = base_center + r_vec;
+    Vec3 top_max = top_center + r_vec;
+    
+    return Vec3(
+        std::max(base_max.x, top_max.x),
+        std::max(base_max.y, top_max.y),
+        std::max(base_max.z, top_max.z)
+    );
+}

@@ -1,0 +1,95 @@
+# Sacred Indian Temple Scene
+# Features authentic temple architecture with proper lighting and materials
+
+# Camera positioned for temple approach and exploration
+camera 0.0 4.0 -25.0 0.0 4.0 0.0 0.0 1.0 0.0 50.0 1.6
+
+# Warm temple atmosphere with golden hour lighting
+background 0.8 0.6 0.4
+
+# Soft ambient temple lighting
+ambient 0.15 0.12 0.08
+
+# === TEMPLE MATERIALS ===
+material temple_stone lambertian 0.9 0.85 0.75    # Sandstone temple walls
+material red_stone lambertian 0.8 0.4 0.3         # Red stone accents
+material temple_floor lambertian 0.85 0.8 0.7     # Temple courtyard floor
+material gold_ornament metal 0.95 0.85 0.4 0.02   # Golden temple decorations
+material sacred_marble lambertian 0.95 0.95 0.92  # White marble altar
+material bronze_bell metal 0.7 0.5 0.3 0.08       # Bronze temple bells
+material sacred_flame emissive 2.0 1.5 0.8        # Sacred fire/lamps
+material crystal_clear dielectric 0.98 0.98 1.0 1.5  # Clear crystals
+material water_surface dielectric 0.7 0.8 0.9 1.33   # Sacred water
+
+# === LIGHTING SETUP ===
+# Main sunlight from the east (traditional direction)
+point_light 20.0 15.0 5.0 2.0 1.8 1.4 0.1
+
+# Temple interior sacred lighting
+point_light 0.0 5.0 0.0 1.5 1.2 0.8 0.05        # Central shrine lamp
+point_light -2.0 4.0 0.0 0.8 0.6 0.4 0.1        # Left shrine lamp  
+point_light 2.0 4.0 0.0 0.8 0.6 0.4 0.1         # Right shrine lamp
+
+# Gateway entrance lighting
+point_light 0.0 6.0 -11.0 1.2 1.0 0.7 0.08      # Gateway illumination
+
+# Atmospheric corner lighting in mandapa
+point_light -7.0 4.0 -7.0 0.6 0.5 0.3 0.15      # Front left
+point_light 7.0 4.0 -7.0 0.6 0.5 0.3 0.15       # Front right
+point_light -7.0 4.0 7.0 0.6 0.5 0.3 0.15       # Back left
+point_light 7.0 4.0 7.0 0.6 0.5 0.3 0.15        # Back right
+
+# === TEMPLE ARCHITECTURE ===
+load_obj examples/temple.obj temple_stone
+
+# === SACRED ALTAR DECORATIONS ===
+# Main deity platform
+sphere 0.0 4.8 0.0 0.8 sacred_marble
+sphere 0.0 5.4 0.0 0.4 gold_ornament
+
+# Sacred offerings
+sphere -0.5 5.0 0.3 0.15 crystal_clear
+sphere 0.5 5.0 0.3 0.15 crystal_clear
+sphere 0.0 5.0 0.6 0.2 bronze_bell
+
+# === TEMPLE BELLS AND ORNAMENTS ===
+# Hanging temple bells on pillars
+sphere -7.0 5.5 -7.0 0.3 bronze_bell
+sphere 7.0 5.5 -7.0 0.3 bronze_bell
+sphere -7.0 5.5 7.0 0.3 bronze_bell
+sphere 7.0 5.5 7.0 0.3 bronze_bell
+
+# Golden ornaments on gateway
+sphere 0.0 8.5 -11.0 0.4 gold_ornament
+sphere -1.5 7.5 -11.0 0.2 gold_ornament
+sphere 1.5 7.5 -11.0 0.2 gold_ornament
+
+# === SACRED FLAMES/LAMPS ===
+# Temple lamps (diyas)
+sphere -1.0 3.2 -0.5 0.1 sacred_flame
+sphere 1.0 3.2 -0.5 0.1 sacred_flame
+sphere -1.0 3.2 0.5 0.1 sacred_flame
+sphere 1.0 3.2 0.5 0.1 sacred_flame
+
+# Gateway entrance lamps
+sphere -2.5 2.0 -11.5 0.15 sacred_flame
+sphere 2.5 2.0 -11.5 0.15 sacred_flame
+
+# === SACRED WATER FEATURES ===
+# Small sacred pools around temple
+sphere -10.0 0.8 -10.0 2.0 water_surface
+sphere 10.0 0.8 -10.0 2.0 water_surface
+sphere -10.0 0.8 10.0 2.0 water_surface
+sphere 10.0 0.8 10.0 2.0 water_surface
+
+# === DECORATIVE ELEMENTS ===
+# Lotus decorations
+sphere 0.0 1.2 -15.0 0.8 red_stone
+sphere -4.0 1.5 -15.0 0.4 red_stone
+sphere 4.0 1.5 -15.0 0.4 red_stone
+
+# Sacred geometry patterns
+sphere -12.0 1.3 0.0 0.6 gold_ornament
+sphere 12.0 1.3 0.0 0.6 gold_ornament
+sphere 0.0 1.3 -12.0 0.5 gold_ornament
+sphere 0.0 1.3 12.0 0.5 gold_ornament

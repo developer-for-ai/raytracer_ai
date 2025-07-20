@@ -46,9 +46,9 @@ This GPU ray tracer project has reached **production maturity** with a comprehen
 ### 🗂️ **Clean Project Structure**
 
 #### **Essential Files Only**
-- **6 scene files** (was 18) - removed all duplicates and obsolete versions
-- **11 documentation files** (was 16) - streamlined for end users
-- **5 OBJ models** - performance testing and architecture demos
+- **7 scene files** (was 18) - removed all duplicates and obsolete versions
+- **7 documentation files** (was 16) - streamlined for end users
+- **2 OBJ models** - temple architecture and testing
 - **Production-ready build system** with automated testing
 
 #### **Current File Inventory**
@@ -60,24 +60,23 @@ This GPU ray tracer project has reached **production maturity** with a comprehen
 ├── SCENES_REFERENCE.md - Guide to all scene files
 ├── TEMPLE_GUIDE.md - Temple exploration guide
 ├── IMPLEMENTATION.md - Technical implementation details
+├── PROJECT_STATUS.md - Current project status and summary
 └── LICENSE - MIT license
 
-📁 Scene Files (6 files)  
+📁 Scene Files (7 files)  
 ├── cornell_box.scene - Classic reference scene
 ├── materials_showcase.scene - All material types demo
 ├── lighting_demo.scene - Comprehensive lighting demo
 ├── showcase.scene - Complete feature demonstration
-├── temple_final_complete.scene - Temple with OBJ architecture
-└── tetrahedron_view.scene - Simple OBJ loading demo
+├── temple_scene.scene - Temple with OBJ architecture
+├── temple_sacred.scene - Atmospheric temple scene
+└── simple_temple_view.scene - Simple OBJ loading demo
 
-📁 3D Models (5 files)
-├── tetrahedron.obj - 4-triangle test model
-├── indian_temple.obj - 294-triangle temple architecture  
-├── triangle_grid.obj - 12-triangle performance test
-├── large_triangle_grid.obj - 108-triangle performance test
-└── massive_triangle_grid.obj - 432-triangle performance test
+📁 3D Models (2 files)
+├── temple.obj - Indian temple architecture with interior access
+└── temple_simple.obj - Simplified temple structure
 
-📁 Build System (2 files)
+📁 Build System (3 files)
 ├── CMakeLists.txt - Build configuration
 ├── build.sh - Automated build and test script  
 └── git-workflow.sh - Development helper script
@@ -88,7 +87,7 @@ This GPU ray tracer project has reached **production maturity** with a comprehen
 #### **Real-Time Interactive Performance**
 - **Cornell Box**: 60+ FPS at 1920×1080
 - **Materials Showcase**: 45+ FPS with complex materials
-- **Temple Scene**: 17-22 FPS with 294 triangles (excellent for triangle-heavy)
+- **Temple Scene**: 17-22 FPS with triangle meshes (excellent for triangle-heavy scenes)
 - **Lighting Demo**: 30+ FPS with multiple light types
 
 #### **High-Quality Offline Rendering**

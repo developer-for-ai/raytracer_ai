@@ -1,0 +1,163 @@
+# Sacred Dravidian Temple - Complete Spiritual Experience
+# Authentic South Indian temple with traditional materials and sacred atmosphere
+# Features: Stepped tower (Vimana), pillared hall (Mandapa), entrance gateway (Gopuram)
+
+# Camera positioned for devotional approach from the east (traditional direction)
+camera 5.0 6.0 -35.0 0.0 6.0 0.0 0.0 1.0 0.0 55.0 1.6
+
+# Golden hour divine atmosphere with sacred lighting
+background 1.0 0.8 0.5
+
+# Soft sacred ambient light
+ambient 0.12 0.10 0.07
+
+# === SACRED MATERIALS ===
+material sacred_sandstone lambertian 0.92 0.85 0.78    # Primary temple stone
+material granite_base lambertian 0.65 0.60 0.55        # Foundation granite
+material sacred_gold metal 0.98 0.88 0.45 0.02        # Temple gold ornaments
+material white_marble lambertian 0.96 0.95 0.93        # Altar marble
+material red_sandstone lambertian 0.85 0.42 0.35       # Decorative red stone
+material bronze_aged metal 0.72 0.55 0.38 0.12        # Temple bronze elements
+material crystal_quartz dielectric 0.98 0.98 1.0 1.54  # Sacred crystals
+material sacred_water dielectric 0.75 0.85 0.92 1.33   # Temple tank water
+material divine_flame emissive 2.2 1.6 0.9             # Sacred oil lamps
+material incense_glow emissive 1.8 1.4 1.0             # Incense altar glow
+material moonstone_pale dielectric 0.88 0.90 0.95 1.52 # Moonstone decorations
+material temple_floor lambertian 0.88 0.82 0.75        # Polished temple floor
+material carved_wood lambertian 0.65 0.45 0.32         # Wooden temple doors
+material prayer_flags lambertian 0.95 0.75 0.25        # Golden prayer flags
+
+# === DIVINE LIGHTING SYSTEM ===
+# Primary sun god illumination from the east (sacred direction)
+point_light 30.0 20.0 -10.0 3.0 2.5 1.8 0.08
+
+# Central sanctum (Garbhagriha) sacred flames
+point_light 0.0 6.5 0.0 2.0 1.5 1.0 0.04             # Main deity lamp
+point_light -2.5 5.0 0.0 1.2 0.9 0.6 0.08           # Left shrine lamp
+point_light 2.5 5.0 0.0 1.2 0.9 0.6 0.08            # Right shrine lamp
+
+# Mandapa (hall) devotional lighting
+point_light -8.0 5.0 -12.0 1.0 0.8 0.5 0.12         # Left pillar lamp
+point_light 0.0 5.0 -12.0 1.0 0.8 0.5 0.12          # Center pillar lamp
+point_light 8.0 5.0 -12.0 1.0 0.8 0.5 0.12          # Right pillar lamp
+
+# Gopuram (gateway) welcoming lights
+point_light 0.0 9.0 -20.0 1.5 1.2 0.8 0.06          # Gateway crown light
+point_light -5.0 4.0 -19.0 0.8 0.6 0.4 0.15         # Left entrance
+point_light 5.0 4.0 -19.0 0.8 0.6 0.4 0.15          # Right entrance
+
+# Side shrine atmospheric lighting
+point_light -13.5 4.0 -6.5 0.8 0.6 0.4 0.18         # Left side shrine
+point_light 13.5 4.0 -6.5 0.8 0.6 0.4 0.18          # Right side shrine
+
+# Sacred courtyard perimeter lighting
+point_light -15.0 3.5 -15.0 0.6 0.5 0.3 0.20        # Northwest corner
+point_light 15.0 3.5 -15.0 0.6 0.5 0.3 0.20         # Northeast corner
+point_light -15.0 3.5 15.0 0.6 0.5 0.3 0.20         # Southwest corner
+point_light 15.0 3.5 15.0 0.6 0.5 0.3 0.20          # Southeast corner
+
+# Mystical tower illumination (Vimana levels)
+point_light 0.0 7.5 0.0 1.8 1.4 1.0 0.05            # First tier blessing
+point_light 0.0 9.5 0.0 1.5 1.2 0.8 0.06            # Second tier grace
+point_light 0.0 11.5 0.0 1.2 1.0 0.7 0.08           # Third tier divine
+point_light 0.0 13.0 0.0 2.5 2.0 1.5 0.02           # Kalasha crown radiance
+
+# === SACRED TEMPLE ARCHITECTURE ===
+load_obj examples/temple.obj sacred_sandstone
+
+# === DIVINE ALTAR DECORATIONS ===
+# Main deity altar in sanctum
+sphere 0.0 3.5 0.0 1.2 white_marble
+sphere 0.0 4.5 0.0 0.8 sacred_gold
+sphere 0.0 5.2 0.0 0.4 crystal_quartz
+
+# Sacred offering vessels
+sphere -1.8 2.8 0.5 0.3 bronze_aged
+sphere 1.8 2.8 0.5 0.3 bronze_aged
+sphere 0.0 2.8 1.5 0.25 sacred_gold
+
+# Sanctum entrance guardian lamps
+sphere -3.0 3.0 -4.5 0.2 divine_flame
+sphere 3.0 3.0 -4.5 0.2 divine_flame
+
+# === MANDAPA SACRED ELEMENTS ===
+# Pillar top ornaments (traditional temple style)
+sphere -7.5 4.8 -11.5 0.3 sacred_gold
+sphere 0.0 4.8 -11.5 0.3 sacred_gold
+sphere 7.5 4.8 -11.5 0.3 sacred_gold
+
+# Hanging temple bells
+sphere -8.0 4.0 -12.0 0.15 bronze_aged
+sphere 0.0 4.0 -12.0 0.15 bronze_aged
+sphere 8.0 4.0 -12.0 0.15 bronze_aged
+
+# Prayer offering platforms
+sphere -6.0 2.0 -10.0 0.4 white_marble
+sphere 6.0 2.0 -10.0 0.4 white_marble
+
+# === GOPURAM DECORATIVE ELEMENTS ===
+# Gateway crown jewels
+sphere 0.0 8.5 -19.0 0.4 crystal_quartz
+sphere -2.0 7.5 -19.0 0.25 sacred_gold
+sphere 2.0 7.5 -19.0 0.25 sacred_gold
+
+# Entrance blessing lamps
+sphere -2.5 3.0 -19.5 0.2 divine_flame
+sphere 2.5 3.0 -19.5 0.2 divine_flame
+
+# === SIDE SHRINE DECORATIONS ===
+# Left shrine sacred elements
+sphere -13.5 3.8 -6.5 0.6 red_sandstone
+sphere -13.5 4.2 -6.5 0.3 sacred_gold
+
+# Right shrine sacred elements
+sphere 13.5 3.8 -6.5 0.6 red_sandstone
+sphere 13.5 4.2 -6.5 0.3 sacred_gold
+
+# === SACRED WATER FEATURES ===
+# Temple tank (traditional purification pool)
+sphere -10.0 1.8 10.0 2.0 sacred_water
+sphere 10.0 1.8 10.0 2.0 sacred_water
+
+# Sacred lotus offerings floating on water
+sphere -10.0 2.1 10.0 0.3 moonstone_pale
+sphere 10.0 2.1 10.0 0.3 moonstone_pale
+
+# === COURTYARD SACRED ELEMENTS ===
+# Corner guardian shrines
+sphere -16.0 2.5 -16.0 0.8 granite_base
+sphere 16.0 2.5 -16.0 0.8 granite_base
+sphere -16.0 2.5 16.0 0.8 granite_base
+sphere 16.0 2.5 16.0 0.8 granite_base
+
+# Sacred fire altars
+sphere -16.0 3.2 -16.0 0.3 divine_flame
+sphere 16.0 3.2 -16.0 0.3 divine_flame
+sphere -16.0 3.2 16.0 0.3 divine_flame
+sphere 16.0 3.2 16.0 0.3 divine_flame
+
+# === CEREMONIAL PATHWAY ELEMENTS ===
+# Sacred step decorations
+sphere -12.0 1.0 -21.5 0.3 moonstone_pale
+sphere 0.0 1.0 -21.5 0.4 crystal_quartz
+sphere 12.0 1.0 -21.5 0.3 moonstone_pale
+
+# Approach blessing markers
+sphere -8.0 1.0 -25.0 0.5 granite_base
+sphere 8.0 1.0 -25.0 0.5 granite_base
+
+# === MYSTICAL ATMOSPHERE ELEMENTS ===
+# Floating incense essence (ethereal spheres)
+sphere -5.0 8.0 -8.0 0.2 incense_glow
+sphere 5.0 8.0 -8.0 0.2 incense_glow
+sphere 0.0 15.0 0.0 0.4 incense_glow
+
+# Sacred geometry markers (temple energy points)
+sphere 0.0 2.0 -30.0 0.6 crystal_quartz
+sphere 0.0 2.0 25.0 0.6 crystal_quartz
+
+# Divine blessing radiances around Kalasha crown
+sphere -0.8 13.5 -0.8 0.15 divine_flame
+sphere 0.8 13.5 -0.8 0.15 divine_flame
+sphere -0.8 13.5 0.8 0.15 divine_flame
+sphere 0.8 13.5 0.8 0.15 divine_flame

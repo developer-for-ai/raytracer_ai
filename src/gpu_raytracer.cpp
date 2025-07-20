@@ -7,9 +7,9 @@
 #include <cmath>
 
 GPURayTracer::GPURayTracer(int width, int height) 
-    : window_width(width), window_height(height), num_materials(0), num_spheres(0), num_triangles(0), num_lights(0),
+    : window_width(width), window_height(height), num_materials(0), num_spheres(0), num_triangles(0), num_cylinders(0), num_lights(0),
       compute_shader(0), shader_program(0), output_texture(0), accumulation_texture(0),
-      material_buffer(0), sphere_buffer(0), triangle_buffer(0), camera_buffer(0), light_buffer(0),
+      material_buffer(0), sphere_buffer(0), triangle_buffer(0), cylinder_buffer(0), camera_buffer(0), light_buffer(0),
       ambient_light(0.1f, 0.1f, 0.1f), frame_count(0), reset_accumulation(true) {
 }
 
@@ -19,6 +19,7 @@ GPURayTracer::~GPURayTracer() {
     if (material_buffer) glDeleteBuffers(1, &material_buffer);
     if (sphere_buffer) glDeleteBuffers(1, &sphere_buffer);
     if (triangle_buffer) glDeleteBuffers(1, &triangle_buffer);
+    if (cylinder_buffer) glDeleteBuffers(1, &cylinder_buffer);
     if (camera_buffer) glDeleteBuffers(1, &camera_buffer);
     if (light_buffer) glDeleteBuffers(1, &light_buffer);
     if (shader_program) glDeleteProgram(shader_program);
@@ -59,6 +60,7 @@ bool GPURayTracer::initialize() {
     glGenBuffers(1, &material_buffer);
     glGenBuffers(1, &sphere_buffer);
     glGenBuffers(1, &triangle_buffer);
+    glGenBuffers(1, &cylinder_buffer);
     glGenBuffers(1, &camera_buffer);
     glGenBuffers(1, &light_buffer);
     
@@ -130,11 +132,13 @@ void GPURayTracer::load_scene(const Scene& scene) {
         gpu_materials.push_back(gpu_mat);
     }
     
-    // Convert spheres and triangles to GPU format
+    // Convert spheres, triangles, and cylinders to GPU format
     std::vector<GPUSphere> gpu_spheres;
     std::vector<GPUTriangle> gpu_triangles;
+    std::vector<GPUCylinder> gpu_cylinders;
     int triangle_count = 0;
     int sphere_count = 0;
+    int cylinder_count = 0;
     
     for (const auto& obj : scene.objects) {
         if (auto sphere = std::dynamic_pointer_cast<Sphere>(obj)) {
@@ -152,17 +156,28 @@ void GPURayTracer::load_scene(const Scene& scene) {
             gpu_triangle.material_id = triangle->material_id;
             gpu_triangles.push_back(gpu_triangle);
             triangle_count++;
+        } else if (auto cylinder = std::dynamic_pointer_cast<Cylinder>(obj)) {
+            GPUCylinder gpu_cylinder;
+            gpu_cylinder.base_center = cylinder->base_center;
+            gpu_cylinder.axis = cylinder->axis;
+            gpu_cylinder.radius = cylinder->radius;
+            gpu_cylinder.height = cylinder->height;
+            gpu_cylinder.material_id = cylinder->material_id;
+            gpu_cylinders.push_back(gpu_cylinder);
+            cylinder_count++;
         }
     }
     
     // Log loading statistics
     ErrorHandling::Logger::info("Scene loading: " + std::to_string(scene.objects.size()) + " total objects, " +
                                 std::to_string(sphere_count) + " spheres, " + 
-                                std::to_string(triangle_count) + " triangles");
+                                std::to_string(triangle_count) + " triangles, " +
+                                std::to_string(cylinder_count) + " cylinders");
     
     num_materials = gpu_materials.size();
     num_spheres = gpu_spheres.size();
     num_triangles = gpu_triangles.size();
+    num_cylinders = gpu_cylinders.size();
     
     // Convert lights to GPU format
     std::vector<GPULight> gpu_lights;
@@ -216,6 +231,12 @@ void GPURayTracer::load_scene(const Scene& scene) {
                  gpu_triangles.data(), GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, triangle_buffer);
     
+    // Upload cylinders
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, cylinder_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, gpu_cylinders.size() * sizeof(GPUCylinder), 
+                 gpu_cylinders.data(), GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, cylinder_buffer);
+
     // Upload lights
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, light_buffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, gpu_lights.size() * sizeof(GPULight), 
