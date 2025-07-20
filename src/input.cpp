@@ -3,24 +3,6 @@
 #include <cstring>
 #include <cmath>
 
-#ifndef GLFW_KEY_W
-#define GLFW_KEY_W 87
-#define GLFW_KEY_A 65  
-#define GLFW_KEY_S 83
-#define GLFW_KEY_D 68
-#define GLFW_KEY_R 82
-#define GLFW_KEY_SPACE 32
-#define GLFW_KEY_LEFT_SHIFT 340
-#define GLFW_KEY_ESCAPE 256
-#define GLFW_KEY_F1 290
-#define GLFW_KEY_UP 265
-#define GLFW_KEY_DOWN 264
-#define GLFW_KEY_LEFT 263
-#define GLFW_KEY_RIGHT 262
-#define GLFW_PRESS 1
-#define GLFW_RELEASE 0
-#endif
-
 InputHandler::InputHandler(Camera* cam, Window* win) 
     : camera(cam), window(win), first_mouse(true), mouse_initialized(false),
       movement_speed(5.0f), mouse_sensitivity(0.1f), yaw(-90.0f), pitch(0.0f) {

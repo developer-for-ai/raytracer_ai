@@ -58,21 +58,39 @@ bool Parser::parse_obj_file(const std::string& filename, Scene& scene) {
             while (iss >> vertex_data) {
                 // Parse vertex/texture/normal format (v/vt/vn)
                 size_t slash_pos = vertex_data.find('/');
-                int vertex_index = std::stoi(vertex_data.substr(0, slash_pos)) - 1; // OBJ indices are 1-based
-                face_indices.push_back(vertex_index);
+                std::string vertex_str = (slash_pos != std::string::npos) ? 
+                                       vertex_data.substr(0, slash_pos) : vertex_data;
+                
+                try {
+                    int vertex_index = std::stoi(vertex_str) - 1; // OBJ indices are 1-based
+                    if (vertex_index < 0) {
+                        std::cerr << "WARNING: Invalid negative vertex index in OBJ file, skipping face" << std::endl;
+                        face_indices.clear();
+                        break;
+                    }
+                    face_indices.push_back(vertex_index);
+                } catch (const std::exception& e) {
+                    std::cerr << "WARNING: Invalid vertex index '" << vertex_str << "' in OBJ file, skipping face" << std::endl;
+                    face_indices.clear();
+                    break;
+                }
             }
             
             // Create triangles (fan triangulation for polygons with more than 3 vertices)
-            for (size_t i = 1; i < face_indices.size() - 1; i++) {
-                if (face_indices[0] < vertices.size() && 
-                    face_indices[i] < vertices.size() && 
-                    face_indices[i + 1] < vertices.size()) {
-                    scene.add_object(std::make_shared<Triangle>(
-                        vertices[face_indices[0]],
-                        vertices[face_indices[i]],
-                        vertices[face_indices[i + 1]],
-                        0
-                    ));
+            if (face_indices.size() >= 3) {
+                for (size_t i = 1; i < face_indices.size() - 1; i++) {
+                    if (static_cast<size_t>(face_indices[0]) < vertices.size() && 
+                        static_cast<size_t>(face_indices[i]) < vertices.size() && 
+                        static_cast<size_t>(face_indices[i + 1]) < vertices.size()) {
+                        scene.add_object(std::make_shared<Triangle>(
+                            vertices[face_indices[0]],
+                            vertices[face_indices[i]],
+                            vertices[face_indices[i + 1]],
+                            0
+                        ));
+                    } else {
+                        std::cerr << "WARNING: Vertex index out of bounds in OBJ file, skipping triangle" << std::endl;
+                    }
                 }
             }
         }

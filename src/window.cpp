@@ -358,7 +358,12 @@ void Window::capture_frame(const std::string& filename) {
         actual_filename += ".ppm";
     } else {
         // Change extension to .ppm
-        actual_filename = filename.substr(0, filename.find_last_of('.')) + ".ppm";
+        size_t dot_pos = filename.find_last_of('.');
+        if (dot_pos != std::string::npos) {
+            actual_filename = filename.substr(0, dot_pos) + ".ppm";
+        } else {
+            actual_filename = filename + ".ppm";
+        }
     }
     
     image.save_ppm(actual_filename);

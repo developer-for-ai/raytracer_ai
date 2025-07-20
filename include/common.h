@@ -6,6 +6,10 @@
 #include <algorithm>
 #include <random>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 // Fast vector math structures
 struct Vec3 {
     float x, y, z;
@@ -17,7 +21,9 @@ struct Vec3 {
     Vec3 operator-(const Vec3& v) const { return Vec3(x - v.x, y - v.y, z - v.z); }
     Vec3 operator*(float t) const { return Vec3(x * t, y * t, z * t); }
     Vec3 operator*(const Vec3& v) const { return Vec3(x * v.x, y * v.y, z * v.z); }
-    Vec3 operator/(float t) const { return *this * (1.0f / t); }
+    Vec3 operator/(float t) const { 
+        return std::abs(t) < 1e-10f ? Vec3(0, 0, 0) : *this * (1.0f / t); 
+    }
     
     float dot(const Vec3& v) const { return x * v.x + y * v.y + z * v.z; }
     Vec3 cross(const Vec3& v) const { 

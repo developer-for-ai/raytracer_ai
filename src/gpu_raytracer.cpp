@@ -6,10 +6,6 @@
 #include <vector>
 #include <cmath>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
 GPURayTracer::GPURayTracer(int width, int height) 
     : window_width(width), window_height(height), num_materials(0), num_spheres(0), num_lights(0),
       compute_shader(0), shader_program(0), output_texture(0), accumulation_texture(0),

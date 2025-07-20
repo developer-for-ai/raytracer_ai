@@ -9,12 +9,6 @@
 #include <iomanip>
 #include <chrono>
 
-// Key constants
-#ifndef GLFW_KEY_ESCAPE
-#define GLFW_KEY_ESCAPE 256
-#define GLFW_KEY_F1 290
-#endif
-
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cout << "Usage: " << argv[0] << " <scene_file> [options]\n";
@@ -44,22 +38,33 @@ int main(int argc, char* argv[]) {
     int max_depth = 10;
     std::string output_filename = "";
     
-    for (int i = 2; i < argc; i++) {
-        std::string arg = argv[i];
-        if ((arg == "-w" || arg == "--width") && i + 1 < argc) {
-            window_width = std::stoi(argv[++i]);
-        } else if ((arg == "-h" || arg == "--height") && i + 1 < argc) {
-            window_height = std::stoi(argv[++i]);
-        } else if ((arg == "-s" || arg == "--samples") && i + 1 < argc) {
-            samples_per_frame = std::stoi(argv[++i]);
-        } else if ((arg == "-d" || arg == "--depth") && i + 1 < argc) {
-            max_depth = std::stoi(argv[++i]);
-        } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
-            output_filename = argv[++i];
-        }
-    }
-    
     try {
+        for (int i = 2; i < argc; i++) {
+            std::string arg = argv[i];
+            if ((arg == "-w" || arg == "--width") && i + 1 < argc) {
+                window_width = std::stoi(argv[++i]);
+                if (window_width <= 0) {
+                    throw std::invalid_argument("Window width must be positive");
+                }
+            } else if ((arg == "-h" || arg == "--height") && i + 1 < argc) {
+                window_height = std::stoi(argv[++i]);
+                if (window_height <= 0) {
+                    throw std::invalid_argument("Window height must be positive");
+                }
+            } else if ((arg == "-s" || arg == "--samples") && i + 1 < argc) {
+                samples_per_frame = std::stoi(argv[++i]);
+                if (samples_per_frame <= 0) {
+                    throw std::invalid_argument("Samples per frame must be positive");
+                }
+            } else if ((arg == "-d" || arg == "--depth") && i + 1 < argc) {
+                max_depth = std::stoi(argv[++i]);
+                if (max_depth <= 0) {
+                    throw std::invalid_argument("Max ray depth must be positive");
+                }
+            } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
+                output_filename = argv[++i];
+            }
+        }
         std::cout << "Loading scene: " << scene_file << std::endl;
         
         // Load scene
@@ -143,15 +148,23 @@ int main(int argc, char* argv[]) {
             }
             
             // Save the image
-            std::string extension = output_filename.substr(output_filename.find_last_of('.') + 1);
-            std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+            size_t dot_pos = output_filename.find_last_of('.');
+            std::string extension;
+            if (dot_pos != std::string::npos) {
+                extension = output_filename.substr(dot_pos + 1);
+                std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+            }
             
             std::string actual_filename = output_filename;
             if (extension == "ppm") {
                 image.save_ppm(output_filename);
             } else if (extension == "png") {
                 // PNG support not implemented, save as PPM instead
-                actual_filename = output_filename.substr(0, output_filename.find_last_of('.')) + ".ppm";
+                if (dot_pos != std::string::npos) {
+                    actual_filename = output_filename.substr(0, dot_pos) + ".ppm";
+                } else {
+                    actual_filename = output_filename + ".ppm";
+                }
                 image.save_ppm(actual_filename);
             } else {
                 // Default to PPM if no extension or unsupported extension
@@ -228,8 +241,8 @@ int main(int argc, char* argv[]) {
             
             // Update FPS every second  
             if (frame_time >= 1.0f) {
-                float fps = frame_count / frame_time;
-                float avg_frame_time = (frame_time / frame_count * 1000.0f);
+                float fps = (frame_time > 0.0f) ? frame_count / frame_time : 0.0f;
+                float avg_frame_time = (frame_count > 0) ? (frame_time / frame_count * 1000.0f) : 0.0f;
                 
                 // Update window title with FPS
                 window.update_fps_display(fps, avg_frame_time);
