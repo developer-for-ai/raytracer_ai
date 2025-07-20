@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-07-20
+
+### Added
+- **Arrow key camera controls**: Use arrow keys to look around as alternative to mouse
+- **Enhanced vertical movement**: Space and Shift now move 2x faster for quicker vertical navigation
+- Arrow key look controls work even without mouse capture for precise camera adjustments
+- Updated in-app and documentation controls to reflect new input options
+
+### Enhanced
+- **Improved navigation experience**: More control options for different user preferences
+- **Faster vertical movement**: Space/Shift movement speed increased with configurable multiplier
+
 ## [1.0.1] - 2025-07-20
 
 ### Fixed

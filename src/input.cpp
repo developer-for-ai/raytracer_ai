@@ -14,13 +14,17 @@
 #define GLFW_KEY_LEFT_SHIFT 340
 #define GLFW_KEY_ESCAPE 256
 #define GLFW_KEY_F1 290
+#define GLFW_KEY_UP 265
+#define GLFW_KEY_DOWN 264
+#define GLFW_KEY_LEFT 263
+#define GLFW_KEY_RIGHT 262
 #define GLFW_PRESS 1
 #define GLFW_RELEASE 0
 #endif
 
 InputHandler::InputHandler(Camera* cam, Window* win) 
     : camera(cam), window(win), first_mouse(true), mouse_initialized(false),
-      movement_speed(2.5f), mouse_sensitivity(0.1f), yaw(-90.0f), pitch(0.0f) {
+      movement_speed(2.5f), vertical_speed_multiplier(2.0f), mouse_sensitivity(0.1f), yaw(-90.0f), pitch(0.0f) {
     std::memset(keys_pressed, false, sizeof(keys_pressed));
     last_mouse_x = 0.0;
     last_mouse_y = 0.0;
@@ -128,14 +132,63 @@ void InputHandler::update(float delta_time) {
         camera_moved = true;
     }
     if (keys_pressed[GLFW_KEY_SPACE]) {
-        camera->position.y += velocity;
-        camera->target.y += velocity;
+        float vertical_velocity = velocity * vertical_speed_multiplier;
+        camera->position.y += vertical_velocity;
+        camera->target.y += vertical_velocity;
         camera_moved = true;
     }
     if (keys_pressed[GLFW_KEY_LEFT_SHIFT]) {
-        camera->position.y -= velocity;
-        camera->target.y -= velocity;
+        float vertical_velocity = velocity * vertical_speed_multiplier;
+        camera->position.y -= vertical_velocity;
+        camera->target.y -= vertical_velocity;
         camera_moved = true;
+    }
+    
+    // Arrow key camera look controls
+    bool camera_rotated = false;
+    float arrow_sensitivity = mouse_sensitivity * 50.0f; // Make arrow keys faster than mouse
+    
+    if (keys_pressed[GLFW_KEY_UP]) {
+        pitch += arrow_sensitivity;
+        camera_rotated = true;
+    }
+    if (keys_pressed[GLFW_KEY_DOWN]) {
+        pitch -= arrow_sensitivity;
+        camera_rotated = true;
+    }
+    if (keys_pressed[GLFW_KEY_LEFT]) {
+        yaw -= arrow_sensitivity;
+        camera_rotated = true;
+    }
+    if (keys_pressed[GLFW_KEY_RIGHT]) {
+        yaw += arrow_sensitivity;
+        camera_rotated = true;
+    }
+    
+    if (camera_rotated) {
+        // Ensure we have initialized angles from camera first
+        if (!mouse_initialized) {
+            initialize_from_camera();
+        }
+        
+        // Constrain pitch
+        if (pitch > 89.0f) pitch = 89.0f;
+        if (pitch < -89.0f) pitch = -89.0f;
+        
+        // Calculate new front vector
+        Vec3 front_new;
+        front_new.x = std::cos(yaw * M_PI / 180.0f) * std::cos(pitch * M_PI / 180.0f);
+        front_new.y = std::sin(pitch * M_PI / 180.0f);
+        front_new.z = std::sin(yaw * M_PI / 180.0f) * std::cos(pitch * M_PI / 180.0f);
+        
+        // Update camera target
+        camera->target = camera->position + front_new.normalize();
+        camera->update_camera();
+        
+        // Reset temporal accumulation when camera rotates
+        if (window) {
+            window->reset_accumulation();
+        }
     }
     
     if (camera_moved) {

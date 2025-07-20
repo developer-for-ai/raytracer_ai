@@ -16,6 +16,7 @@ private:
     Window* window;  // Reference to window for checking mouse capture state
     
     float movement_speed;
+    float vertical_speed_multiplier; // Multiplier for vertical movement (Space/Shift)
     float mouse_sensitivity;
     
     // Initial camera state for reset

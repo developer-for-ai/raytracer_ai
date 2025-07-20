@@ -106,13 +106,16 @@ When running the GPU version:
 - **WASD** - Move camera forward/left/backward/right
 - **Left Click** - Toggle mouse capture for camera look (click to capture, click again to release)
 - **Mouse** - Look around when captured (first-person camera)
-- **Space** - Move up
-- **Shift** - Move down
+- **Arrow Keys** - Look around (alternative to mouse, works even without mouse capture)
+- **Space** - Move up (2x faster than horizontal movement)
+- **Shift** - Move down (2x faster than horizontal movement)
 - **R** - Reset camera to initial position and orientation
 - **F1** - Toggle detailed performance stats in window title
 - **ESC** - Exit
 
 > 💡 **Tip**: Click anywhere in the window to start looking around. The mouse cursor will be hidden and locked to the window. Click again to release the mouse and return to normal cursor behavior.
+
+> 🎯 **Alternative Look Controls**: Use the arrow keys to look around without capturing the mouse - great for precise camera adjustments!
 
 > 🔄 **Camera Reset**: If you lose the scene or get disoriented, press **R** to reset the camera to its original position and view angle.
 
