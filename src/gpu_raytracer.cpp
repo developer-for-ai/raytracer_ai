@@ -1,8 +1,8 @@
 #include "gpu_raytracer.h"
 #include "shader.h"
+#include "error_handling.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <iostream>
 #include <vector>
 #include <cmath>
 
@@ -25,12 +25,12 @@ GPURayTracer::~GPURayTracer() {
 
 bool GPURayTracer::initialize() {
     if (glewInit() != GLEW_OK) {
-        std::cerr << "Failed to initialize GLEW" << std::endl;
+        ErrorHandling::Logger::error("Failed to initialize GLEW");
         return false;
     }
     
     if (!GLEW_ARB_compute_shader) {
-        std::cerr << "Compute shaders not supported" << std::endl;
+        ErrorHandling::Logger::error("Compute shaders not supported");
         return false;
     }
     
@@ -74,9 +74,11 @@ bool GPURayTracer::create_compute_program() {
     GLint success;
     glGetShaderiv(compute_shader, GL_COMPILE_STATUS, &success);
     if (!success) {
-        GLchar info_log[512];
-        glGetShaderInfoLog(compute_shader, 512, nullptr, info_log);
-        std::cerr << "Compute shader compilation failed: " << info_log << std::endl;
+        constexpr GLsizei LOG_SIZE = 1024;
+        char info_log[LOG_SIZE];
+        glGetShaderInfoLog(compute_shader, LOG_SIZE, nullptr, info_log);
+        ErrorHandling::Logger::error("Compute shader compilation failed: " + std::string(info_log));
+        glDeleteShader(compute_shader);
         return false;
     }
     
@@ -88,9 +90,12 @@ bool GPURayTracer::create_compute_program() {
     // Check linking
     glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
     if (!success) {
-        GLchar info_log[512];
-        glGetProgramInfoLog(shader_program, 512, nullptr, info_log);
-        std::cerr << "Compute program linking failed: " << info_log << std::endl;
+        constexpr GLsizei LOG_SIZE = 1024;
+        char info_log[LOG_SIZE];
+        glGetProgramInfoLog(shader_program, LOG_SIZE, nullptr, info_log);
+        ErrorHandling::Logger::error("Compute program linking failed: " + std::string(info_log));
+        glDeleteProgram(shader_program);
+        glDeleteShader(compute_shader);
         return false;
     }
     

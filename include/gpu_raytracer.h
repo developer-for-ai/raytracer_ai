@@ -6,27 +6,38 @@
 // Forward declarations to avoid including OpenGL headers in header
 typedef unsigned int GLuint;
 
-struct GPUMaterial {
+// GPU-aligned structures (std140 layout compatible)
+struct alignas(16) GPUMaterial {
     Vec3 albedo;
     float roughness;
     Vec3 emission; 
     float ior;
-    int type; // 0=lambertian, 1=metal, 2=dielectric, 3=emissive, 4=glossy, 5=subsurface
+    int type; // MaterialType as int for GPU compatibility
     float metallic;
     float specular;
     float subsurface;
+    
+    GPUMaterial() = default;
+    explicit GPUMaterial(const Material& mat) noexcept 
+        : albedo(mat.albedo), roughness(mat.roughness), emission(mat.emission),
+          ior(mat.ior), type(static_cast<int>(mat.type)), metallic(mat.metallic),
+          specular(mat.specular), subsurface(mat.subsurface) {}
 };
 
-struct GPUSphere {
+struct alignas(16) GPUSphere {
     Vec3 center;
     float radius;
     int material_id;
-    float padding[3];
+    float _padding[3]; // Explicit padding for alignment
+    
+    GPUSphere() = default;
+    GPUSphere(const Vec3& c, float r, int mat_id) noexcept 
+        : center(c), radius(r), material_id(mat_id), _padding{0, 0, 0} {}
 };
 
-struct GPUCamera {
+struct alignas(16) GPUCamera {
     Vec3 position;
-    float padding1;
+    float _padding1;
     Vec3 lower_left_corner;
     float padding2;
     Vec3 horizontal;

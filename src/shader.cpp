@@ -1,11 +1,16 @@
 #include "shader.h"
+#include "error_handling.h"
 #include <GL/glew.h>
-#include <iostream>
 #include <fstream>
 #include <sstream>
 
 std::string Shader::load_file(const std::string& filepath) {
     std::ifstream file(filepath);
+    if (!file.is_open()) {
+        ErrorHandling::Logger::error("Failed to open shader file: " + filepath);
+        return "";
+    }
+    
     std::stringstream buffer;
     buffer << file.rdbuf();
     return buffer.str();
@@ -15,15 +20,22 @@ bool Shader::compile_shader(const std::string& source, unsigned int type, unsign
     const char* source_cstr = source.c_str();
     
     shader_id = glCreateShader(type);
+    if (shader_id == 0) {
+        ErrorHandling::Logger::error("Failed to create shader");
+        return false;
+    }
+    
     glShaderSource(shader_id, 1, &source_cstr, nullptr);
     glCompileShader(shader_id);
     
     GLint success;
     glGetShaderiv(shader_id, GL_COMPILE_STATUS, &success);
     if (!success) {
-        GLchar info_log[512];
-        glGetShaderInfoLog(shader_id, 512, nullptr, info_log);
-        std::cerr << "Shader compilation failed: " << info_log << std::endl;
+        constexpr GLsizei LOG_SIZE = 1024;
+        char info_log[LOG_SIZE];
+        glGetShaderInfoLog(shader_id, LOG_SIZE, nullptr, info_log);
+        ErrorHandling::Logger::error("Shader compilation failed: " + std::string(info_log));
+        glDeleteShader(shader_id);
         return false;
     }
     
@@ -32,6 +44,11 @@ bool Shader::compile_shader(const std::string& source, unsigned int type, unsign
 
 bool Shader::link_program(unsigned int vertex_shader, unsigned int fragment_shader, unsigned int& program_id) {
     program_id = glCreateProgram();
+    if (program_id == 0) {
+        ErrorHandling::Logger::error("Failed to create shader program");
+        return false;
+    }
+    
     glAttachShader(program_id, vertex_shader);
     glAttachShader(program_id, fragment_shader);
     glLinkProgram(program_id);
@@ -39,9 +56,11 @@ bool Shader::link_program(unsigned int vertex_shader, unsigned int fragment_shad
     GLint success;
     glGetProgramiv(program_id, GL_LINK_STATUS, &success);
     if (!success) {
-        GLchar info_log[512];
-        glGetProgramInfoLog(program_id, 512, nullptr, info_log);
-        std::cerr << "Program linking failed: " << info_log << std::endl;
+        constexpr GLsizei LOG_SIZE = 1024;
+        char info_log[LOG_SIZE];
+        glGetProgramInfoLog(program_id, LOG_SIZE, nullptr, info_log);
+        ErrorHandling::Logger::error("Program linking failed: " + std::string(info_log));
+        glDeleteProgram(program_id);
         return false;
     }
     
@@ -52,28 +71,42 @@ bool Shader::create_compute_shader(const std::string& source, unsigned int& prog
     const char* source_cstr = source.c_str();
     
     GLuint compute_shader = glCreateShader(GL_COMPUTE_SHADER);
+    if (compute_shader == 0) {
+        ErrorHandling::Logger::error("Failed to create compute shader");
+        return false;
+    }
+    
     glShaderSource(compute_shader, 1, &source_cstr, nullptr);
     glCompileShader(compute_shader);
     
     GLint success;
     glGetShaderiv(compute_shader, GL_COMPILE_STATUS, &success);
     if (!success) {
-        GLchar info_log[512];
-        glGetShaderInfoLog(compute_shader, 512, nullptr, info_log);
-        std::cerr << "Compute shader compilation failed: " << info_log << std::endl;
+        constexpr GLsizei LOG_SIZE = 1024;
+        char info_log[LOG_SIZE];
+        glGetShaderInfoLog(compute_shader, LOG_SIZE, nullptr, info_log);
+        ErrorHandling::Logger::error("Compute shader compilation failed: " + std::string(info_log));
         glDeleteShader(compute_shader);
         return false;
     }
     
     program_id = glCreateProgram();
+    if (program_id == 0) {
+        ErrorHandling::Logger::error("Failed to create compute program");
+        glDeleteShader(compute_shader);
+        return false;
+    }
+    
     glAttachShader(program_id, compute_shader);
     glLinkProgram(program_id);
     
     glGetProgramiv(program_id, GL_LINK_STATUS, &success);
     if (!success) {
-        GLchar info_log[512];
-        glGetProgramInfoLog(program_id, 512, nullptr, info_log);
-        std::cerr << "Compute program linking failed: " << info_log << std::endl;
+        constexpr GLsizei LOG_SIZE = 1024;
+        char info_log[LOG_SIZE];
+        glGetProgramInfoLog(program_id, LOG_SIZE, nullptr, info_log);
+        ErrorHandling::Logger::error("Compute program linking failed: " + std::string(info_log));
+        glDeleteProgram(program_id);
         glDeleteShader(compute_shader);
         return false;
     }
@@ -84,19 +117,20 @@ bool Shader::create_compute_shader(const std::string& source, unsigned int& prog
 
 void Shader::check_compile_errors(unsigned int shader, const std::string& type) {
     GLint success;
-    GLchar info_log[1024];
+    constexpr GLsizei LOG_SIZE = 1024;
+    char info_log[LOG_SIZE];
     
     if (type != "PROGRAM") {
         glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
         if (!success) {
-            glGetShaderInfoLog(shader, 1024, nullptr, info_log);
-            std::cerr << "Shader compilation error (" << type << "): " << info_log << std::endl;
+            glGetShaderInfoLog(shader, LOG_SIZE, nullptr, info_log);
+            ErrorHandling::Logger::error("Shader compilation error (" + type + "): " + std::string(info_log));
         }
     } else {
         glGetProgramiv(shader, GL_LINK_STATUS, &success);
         if (!success) {
-            glGetProgramInfoLog(shader, 1024, nullptr, info_log);
-            std::cerr << "Program linking error (" << type << "): " << info_log << std::endl;
+            glGetProgramInfoLog(shader, LOG_SIZE, nullptr, info_log);
+            ErrorHandling::Logger::error("Program linking error (" + type + "): " + std::string(info_log));
         }
     }
 }

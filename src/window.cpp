@@ -1,9 +1,9 @@
 #include "window.h"
 #include "shader.h"
 #include "image.h"
+#include "error_handling.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <iostream>
 #include <string>
 
 Window::Window(int w, int h, const std::string& t) 
@@ -25,13 +25,13 @@ Window::~Window() {
 bool Window::initialize() {
     // Initialize GLFW
     if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW" << std::endl;
+        ErrorHandling::Logger::error("Failed to initialize GLFW");
         return false;
     }
     
     // Set error callback for better debugging
     glfwSetErrorCallback([](int error, const char* description) {
-        std::cerr << "GLFW Error " << error << ": " << description << std::endl;
+        ErrorHandling::Logger::error("GLFW Error " + std::to_string(error) + ": " + std::string(description));
     });
     
     // Set OpenGL version and profile
@@ -47,31 +47,31 @@ bool Window::initialize() {
     // Create window
     window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
     if (!window) {
-        std::cerr << "Failed to create GLFW window" << std::endl;
+        ErrorHandling::Logger::error("Failed to create GLFW window");
         const char* error_description;
         int error_code = glfwGetError(&error_description);
         if (error_code != GLFW_NO_ERROR) {
-            std::cerr << "GLFW Error " << error_code << ": " << error_description << std::endl;
+            ErrorHandling::Logger::error("GLFW Error " + std::to_string(error_code) + ": " + std::string(error_description));
         }
         glfwTerminate();
         return false;
     }
     
-    std::cout << "Window created successfully" << std::endl;
+    ErrorHandling::Logger::info("Window created successfully");
     
     glfwMakeContextCurrent(window);
     
     // Initialize GLEW
     GLenum glew_init = glewInit();
     if (glew_init != GLEW_OK) {
-        std::cerr << "Failed to initialize GLEW: " << glewGetErrorString(glew_init) << std::endl;
+        ErrorHandling::Logger::error("Failed to initialize GLEW: " + std::string(reinterpret_cast<const char*>(glewGetErrorString(glew_init))));
         return false;
     }
     
     // Initialize GPU raytracer
     gpu_raytracer = std::make_unique<GPURayTracer>(width, height);
     if (!gpu_raytracer->initialize()) {
-        std::cerr << "Failed to initialize GPU raytracer" << std::endl;
+        ErrorHandling::Logger::error("Failed to initialize GPU raytracer");
         return false;
     }
     
@@ -129,7 +129,7 @@ bool Window::initialize() {
 void Window::setup_display_rendering() {
     // Compile display shaders
     if (!compile_display_shaders()) {
-        std::cerr << "Failed to compile display shaders" << std::endl;
+        ErrorHandling::Logger::error("Failed to compile display shaders");
         return;
     }
     
@@ -170,9 +170,11 @@ bool Window::compile_display_shaders() {
     GLint success;
     glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
     if (!success) {
-        GLchar info_log[512];
-        glGetShaderInfoLog(vertex_shader, 512, nullptr, info_log);
-        std::cerr << "Vertex shader compilation failed: " << info_log << std::endl;
+        constexpr GLsizei LOG_SIZE = 1024;
+        char info_log[LOG_SIZE];
+        glGetShaderInfoLog(vertex_shader, LOG_SIZE, nullptr, info_log);
+        ErrorHandling::Logger::error("Vertex shader compilation failed: " + std::string(info_log));
+        glDeleteShader(vertex_shader);
         return false;
     }
     
@@ -183,9 +185,12 @@ bool Window::compile_display_shaders() {
     
     glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
     if (!success) {
-        GLchar info_log[512];
-        glGetShaderInfoLog(fragment_shader, 512, nullptr, info_log);
-        std::cerr << "Fragment shader compilation failed: " << info_log << std::endl;
+        constexpr GLsizei LOG_SIZE = 1024;
+        char info_log[LOG_SIZE];
+        glGetShaderInfoLog(fragment_shader, LOG_SIZE, nullptr, info_log);
+        ErrorHandling::Logger::error("Fragment shader compilation failed: " + std::string(info_log));
+        glDeleteShader(vertex_shader);
+        glDeleteShader(fragment_shader);
         return false;
     }
     
@@ -197,9 +202,13 @@ bool Window::compile_display_shaders() {
     
     glGetProgramiv(display_shader_program, GL_LINK_STATUS, &success);
     if (!success) {
-        GLchar info_log[512];
-        glGetProgramInfoLog(display_shader_program, 512, nullptr, info_log);
-        std::cerr << "Display program linking failed: " << info_log << std::endl;
+        constexpr GLsizei LOG_SIZE = 1024;
+        char info_log[LOG_SIZE];
+        glGetProgramInfoLog(display_shader_program, LOG_SIZE, nullptr, info_log);
+        ErrorHandling::Logger::error("Display program linking failed: " + std::string(info_log));
+        glDeleteShader(vertex_shader);
+        glDeleteShader(fragment_shader);
+        glDeleteProgram(display_shader_program);
         return false;
     }
     
@@ -219,7 +228,7 @@ void Window::render_frame(const Camera& camera, int samples, int max_depth) {
     // Check for OpenGL errors before rendering
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
-        std::cerr << "OpenGL error before rendering: " << error << std::endl;
+        ErrorHandling::Logger::error("OpenGL error before rendering: " + std::to_string(error));
         return;
     }
     
@@ -229,7 +238,7 @@ void Window::render_frame(const Camera& camera, int samples, int max_depth) {
     // Check for errors after GPU raytracer
     error = glGetError();
     if (error != GL_NO_ERROR) {
-        std::cerr << "OpenGL error after GPU raytracer: " << error << std::endl;
+        ErrorHandling::Logger::error("OpenGL error after GPU raytracer: " + std::to_string(error));
         return;
     }
     
@@ -247,7 +256,7 @@ void Window::render_frame(const Camera& camera, int samples, int max_depth) {
     // Check for errors after display rendering
     error = glGetError();
     if (error != GL_NO_ERROR) {
-        std::cerr << "OpenGL error after display rendering: " << error << std::endl;
+        ErrorHandling::Logger::error("OpenGL error after display rendering: " + std::to_string(error));
     }
 }
 
@@ -332,7 +341,7 @@ void Window::capture_frame(const std::string& filename) {
     // Check for OpenGL errors
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
-        std::cerr << "OpenGL error during frame capture: " << error << std::endl;
+        ErrorHandling::Logger::error("OpenGL error during frame capture: " + std::to_string(error));
         return;
     }
     

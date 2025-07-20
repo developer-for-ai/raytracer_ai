@@ -33,7 +33,10 @@ set(SOURCES
     src/gpu_raytracer.cpp
     src/window.cpp
     src/input.cpp
+    src/scene.cpp
     src/shader.cpp
+    src/error_handling.cpp
+    src/profiler.cpp
 )
 
 # Create executable

@@ -1,5 +1,7 @@
 #include "geometry.h"
+#include "common.h"
 #include <algorithm>
+#include <cmath>
 
 bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const {
     Vec3 oc = ray.origin - center;

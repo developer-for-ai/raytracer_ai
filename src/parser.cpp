@@ -1,8 +1,9 @@
 #include "parser.h"
 #include "light.h"
+#include "error_handling.h"
 #include <fstream>
 #include <sstream>
-#include <iostream>
+#include <algorithm>
 #include <map>
 
 bool Parser::parse_scene_file(const std::string& filename, Scene& scene) {

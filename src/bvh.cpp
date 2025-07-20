@@ -1,13 +1,25 @@
 #include "bvh.h"
+#include "common.h"
 #include <algorithm>
 #include <random>
+#include <cmath>
 
 BVH::BVH(std::vector<std::shared_ptr<Geometry>>& objects) {
-    root = build_bvh(objects, 0, objects.size());
+    if (objects.empty()) {
+        root = nullptr;
+        return;
+    }
+    
+    root = build_bvh(objects, 0, static_cast<int>(objects.size()));
 }
 
 std::shared_ptr<BVHNode> BVH::build_bvh(std::vector<std::shared_ptr<Geometry>>& objects, int start, int end) {
     auto node = std::make_shared<BVHNode>();
+    
+    // Input validation
+    if (start >= end || start < 0 || end > static_cast<int>(objects.size())) {
+        return nullptr;
+    }
     
     // Base case: single object
     if (end - start == 1) {
@@ -17,13 +29,13 @@ std::shared_ptr<BVHNode> BVH::build_bvh(std::vector<std::shared_ptr<Geometry>>& 
         return node;
     }
     
-    // Calculate bounding box for all objects
-    Vec3 min_bounds(1e30f, 1e30f, 1e30f);
-    Vec3 max_bounds(-1e30f, -1e30f, -1e30f);
+    // Calculate bounding box for all objects - use more efficient computation
+    Vec3 min_bounds(std::numeric_limits<float>::max());
+    Vec3 max_bounds(std::numeric_limits<float>::lowest());
     
-    for (int i = start; i < end; i++) {
-        Vec3 obj_min = objects[i]->get_min_bounds();
-        Vec3 obj_max = objects[i]->get_max_bounds();
+    for (int i = start; i < end; ++i) {
+        const Vec3 obj_min = objects[i]->get_min_bounds();
+        const Vec3 obj_max = objects[i]->get_max_bounds();
         
         min_bounds.x = std::min(min_bounds.x, obj_min.x);
         min_bounds.y = std::min(min_bounds.y, obj_min.y);
@@ -97,22 +109,27 @@ bool BVH::hit_bvh(const std::shared_ptr<BVHNode>& node, const Ray& ray, float t_
 }
 
 bool BVH::hit_box(const Vec3& min_bounds, const Vec3& max_bounds, const Ray& ray) const {
-    Vec3 inv_dir = Vec3(1.0f / ray.direction.x, 1.0f / ray.direction.y, 1.0f / ray.direction.z);
+    // Avoid division by zero
+    const float epsilon = 1e-8f;
     
-    float t1 = (min_bounds.x - ray.origin.x) * inv_dir.x;
-    float t2 = (max_bounds.x - ray.origin.x) * inv_dir.x;
-    if (inv_dir.x < 0.0f) std::swap(t1, t2);
+    float inv_dir_x = std::abs(ray.direction.x) > epsilon ? (1.0f / ray.direction.x) : (ray.direction.x >= 0 ? 1e8f : -1e8f);
+    float inv_dir_y = std::abs(ray.direction.y) > epsilon ? (1.0f / ray.direction.y) : (ray.direction.y >= 0 ? 1e8f : -1e8f);
+    float inv_dir_z = std::abs(ray.direction.z) > epsilon ? (1.0f / ray.direction.z) : (ray.direction.z >= 0 ? 1e8f : -1e8f);
     
-    float t3 = (min_bounds.y - ray.origin.y) * inv_dir.y;
-    float t4 = (max_bounds.y - ray.origin.y) * inv_dir.y;
-    if (inv_dir.y < 0.0f) std::swap(t3, t4);
+    float t1 = (min_bounds.x - ray.origin.x) * inv_dir_x;
+    float t2 = (max_bounds.x - ray.origin.x) * inv_dir_x;
+    if (inv_dir_x < 0.0f) std::swap(t1, t2);
     
-    float t5 = (min_bounds.z - ray.origin.z) * inv_dir.z;
-    float t6 = (max_bounds.z - ray.origin.z) * inv_dir.z;
-    if (inv_dir.z < 0.0f) std::swap(t5, t6);
+    float t3 = (min_bounds.y - ray.origin.y) * inv_dir_y;
+    float t4 = (max_bounds.y - ray.origin.y) * inv_dir_y;
+    if (inv_dir_y < 0.0f) std::swap(t3, t4);
+    
+    float t5 = (min_bounds.z - ray.origin.z) * inv_dir_z;
+    float t6 = (max_bounds.z - ray.origin.z) * inv_dir_z;
+    if (inv_dir_z < 0.0f) std::swap(t5, t6);
     
     float tmin = std::max({t1, t3, t5});
     float tmax = std::min({t2, t4, t6});
     
-    return tmax >= 0 && tmin <= tmax;
+    return tmax >= 0.0f && tmin <= tmax;
 }

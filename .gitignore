@@ -74,10 +74,12 @@ Thumbs.db
 *.png
 *.jpg
 *.jpeg
+*.scene
 !examples/*.ppm
 !examples/*.png
 !examples/*.jpg
 !examples/*.jpeg
+!examples/*.scene
 
 # Backup files
 *.bak
