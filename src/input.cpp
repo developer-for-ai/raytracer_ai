@@ -24,7 +24,7 @@
 
 InputHandler::InputHandler(Camera* cam, Window* win) 
     : camera(cam), window(win), first_mouse(true), mouse_initialized(false),
-      movement_speed(2.5f), vertical_speed_multiplier(8.0f), mouse_sensitivity(0.1f), yaw(-90.0f), pitch(0.0f) {
+      movement_speed(300.0f), vertical_speed_multiplier(1.0f), mouse_sensitivity(0.1f), yaw(-90.0f), pitch(0.0f) {
     std::memset(keys_pressed, false, sizeof(keys_pressed));
     last_mouse_x = 0.0;
     last_mouse_y = 0.0;
@@ -110,27 +110,33 @@ void InputHandler::update(float delta_time) {
     float velocity = movement_speed * delta_time;
     bool camera_moved = false;
     
-    // Movement
+    // Calculate movement direction vector first
+    Vec3 movement_direction(0, 0, 0);
+    
+    // Accumulate movement directions
     if (keys_pressed[GLFW_KEY_W]) {
-        camera->position = camera->position + front * velocity;
-        camera->target = camera->target + front * velocity;
-        camera_moved = true;
+        movement_direction = movement_direction + front;
     }
     if (keys_pressed[GLFW_KEY_S]) {
-        camera->position = camera->position - front * velocity;
-        camera->target = camera->target - front * velocity;
-        camera_moved = true;
+        movement_direction = movement_direction - front;
     }
     if (keys_pressed[GLFW_KEY_A]) {
-        camera->position = camera->position - right * velocity;
-        camera->target = camera->target - right * velocity;
-        camera_moved = true;
+        movement_direction = movement_direction - right;
     }
     if (keys_pressed[GLFW_KEY_D]) {
-        camera->position = camera->position + right * velocity;
-        camera->target = camera->target + right * velocity;
+        movement_direction = movement_direction + right;
+    }
+    
+    // Normalize diagonal movement to prevent faster diagonal speed
+    if (movement_direction.x != 0 || movement_direction.z != 0) {
+        movement_direction = movement_direction.normalize();
+        Vec3 movement = movement_direction * velocity;
+        camera->position = camera->position + movement;
+        camera->target = camera->target + movement;
         camera_moved = true;
     }
+    
+    // Handle vertical movement separately
     if (keys_pressed[GLFW_KEY_SPACE]) {
         float vertical_velocity = velocity * vertical_speed_multiplier;
         camera->position.y += vertical_velocity;
