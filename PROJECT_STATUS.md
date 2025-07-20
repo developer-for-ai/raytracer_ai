@@ -47,29 +47,29 @@ This GPU ray tracer project has reached **production maturity** with a comprehen
 
 #### **Essential Files Only**
 - **7 scene files** (was 18) - removed all duplicates and obsolete versions
-- **15 documentation files** (8 main + 7 in docs/) - comprehensive and well-organized
+- **16 documentation files** (3 main + 12 in docs/) - comprehensive and well-organized
 - **2 OBJ models** - temple architecture and testing
 - **Production-ready build system** with automated testing
 
 #### **Current File Inventory**
 ```
-📁 Documentation (8 files + docs/ directory)
+📁 Documentation (12 files + docs/ directory)
 ├── README.md - Comprehensive project documentation  
 ├── CHANGELOG.md - Version history and release notes
-├── CONTRIBUTING.md - Development guidelines
-├── SCENES_REFERENCE.md - Guide to all scene files
-├── TEMPLE_GUIDE.md - Temple exploration guide
-├── IMPLEMENTATION.md - Technical implementation details
 ├── PROJECT_STATUS.md - Current project status and summary
 ├── LICENSE - MIT license
 └── docs/ - Technical documentation directory
     ├── README.md - Documentation index and navigation
+    ├── installation.md - Cross-platform installation guide
+    ├── build_system.md - CMake configuration and build process
+    ├── implementation.md - Core architecture and optimizations
+    ├── contributing.md - Development guidelines and standards
     ├── parser.md - Scene file and OBJ parsing system
     ├── gpu_architecture.md - OpenGL compute shader implementation
     ├── materials.md - Advanced material system guide
     ├── lighting.md - Complete lighting system documentation
     ├── scene_format.md - Scene file format specification
-    ├── build_system.md - Build and compilation guide
+    ├── scenes_reference.md - Guide to all included scene files
     └── intersections.md - Ray-geometry intersection algorithms
 
 📁 Scene Files (7 files)  
@@ -85,10 +85,11 @@ This GPU ray tracer project has reached **production maturity** with a comprehen
 ├── temple.obj - Indian temple architecture with interior access
 └── temple_simple.obj - Simplified temple structure
 
-📁 Build System (3 files)
-├── CMakeLists.txt - Build configuration
-├── build.sh - Automated build and test script  
-└── git-workflow.sh - Development helper script
+📁 Build System (4 files)
+├── CMakeLists.txt - Cross-platform CMake configuration
+├── build.sh - Linux automated build script
+├── build_macos.sh - macOS automated build script  
+└── build.bat - Windows automated build script
 ```
 
 #### **Enhanced Technical Documentation**

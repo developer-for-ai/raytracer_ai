@@ -12,18 +12,16 @@ This directory contains comprehensive technical documentation for developers wor
 
 ### 🎨 **Scene Creation**
 - **[Scene Format](scene_format.md)** - Complete scene file format specification
-- **[OBJ Support](obj_format.md)** - OBJ file loading and processing
-- **[Camera System](camera.md)** - Camera positioning and controls
+- **[Scenes Reference](scenes_reference.md)** - Guide to all included scene files
+- **[Implementation Details](implementation.md)** - Core architecture and optimizations
 
-### 🚀 **Development**
+### 🚀 **Development & Setup**
 - **[Build System](build_system.md)** - CMake configuration and build process
-- **[Performance Guide](performance.md)** - Optimization techniques and profiling
-- **[Debugging Guide](debugging.md)** - Error handling and debugging techniques
+- **[Installation Guide](installation.md)** - Cross-platform installation instructions
+- **[Contributing Guide](contributing.md)** - Development guidelines and contribution process
 
 ### 📐 **Mathematics & Algorithms**
-- **[Ray Tracing Math](math.md)** - Mathematical foundations and algorithms
 - **[Intersection Algorithms](intersections.md)** - Ray-geometry intersection methods
-- **[Sampling Techniques](sampling.md)** - Monte Carlo and stratified sampling
 
 ## Quick Navigation
 
@@ -34,18 +32,23 @@ This directory contains comprehensive technical documentation for developers wor
 | 🎨 **Materials** | [materials.md](materials.md) | Material system and properties |
 | 💡 **Lighting** | [lighting.md](lighting.md) | Light types and shadow rendering |
 | 📄 **Scene Files** | [scene_format.md](scene_format.md) | Scene file syntax and commands |
+| 📋 **Scenes Guide** | [scenes_reference.md](scenes_reference.md) | All included scene files |
 | 🏗️ **Build** | [build_system.md](build_system.md) | Compilation and dependencies |
+| 💻 **Install** | [installation.md](installation.md) | Cross-platform setup guide |
+| ⚙️ **Implementation** | [implementation.md](implementation.md) | Core architecture details |
+| 🤝 **Contributing** | [contributing.md](contributing.md) | Development guidelines |
 
 ## Getting Started
 
-1. **For Scene Creation**: Start with [Scene Format](scene_format.md)
-2. **For 3D Models**: Read [OBJ Support](obj_format.md)
+1. **For Setup**: Start with [Installation Guide](installation.md)
+2. **For Scene Creation**: Read [Scene Format](scene_format.md)
 3. **For Development**: Begin with [Build System](build_system.md)
-4. **For Performance**: Check [Performance Guide](performance.md)
+4. **For Contributing**: Check [Contributing Guide](contributing.md)
 
 ## Documentation Standards
 
 - All code examples are tested and working
 - File paths use absolute references from project root
 - Performance notes include actual measurements
+- Cross-platform compatibility documented
 - Examples demonstrate real-world usage patterns

@@ -21,8 +21,12 @@ A complete, production-ready **interactive GPU ray tracing system** with real-ti
 │   ├── materials.md         # Advanced material system guide
 │   ├── lighting.md          # Complete lighting system
 │   ├── scene_format.md      # Scene file format specification
+│   ├── scenes_reference.md  # Guide to all included scene files
 │   ├── build_system.md      # Build and compilation guide
-│   └── intersections.md     # Ray-geometry intersection algorithms
+│   ├── intersections.md     # Ray-geometry intersection algorithms
+│   ├── installation.md      # Cross-platform installation guide
+│   ├── implementation.md    # Core architecture and optimizations
+│   └── contributing.md      # Development guidelines
 ```
 
 ## 🏛️ **Featured Scenes**
