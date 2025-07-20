@@ -5,7 +5,6 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <string>
-#include <cstdio>
 
 Window::Window(int w, int h, const std::string& t) 
     : window(nullptr), width(w), height(h), title(t),
@@ -353,20 +352,15 @@ void Window::capture_frame(const std::string& filename) {
     }
     
     // Save the image
-    std::string extension = filename.substr(filename.find_last_of('.') + 1);
-    std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
-    
-    if (extension == "ppm") {
-        image.save_ppm(filename);
-    } else if (extension == "png") {
-        image.save_png(filename);
+    // Always save as PPM format
+    std::string actual_filename = filename;
+    if (filename.find('.') == std::string::npos) {
+        actual_filename += ".ppm";
     } else {
-        // Default to PPM if no extension or unsupported extension
-        std::string ppm_filename = filename + ".ppm";
-        image.save_ppm(ppm_filename);
-        std::cout << "\n[Frame saved as: " << ppm_filename << "]" << std::endl;
-        return;
+        // Change extension to .ppm
+        actual_filename = filename.substr(0, filename.find_last_of('.')) + ".ppm";
     }
     
-    std::cout << "\n[Frame saved as: " << filename << "]" << std::endl;
+    image.save_ppm(actual_filename);
+    std::cout << "\n[Frame saved as: " << actual_filename << "]" << std::endl;
 }

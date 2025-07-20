@@ -1,0 +1,46 @@
+# Comprehensive Lighting Demo Scene
+# Demonstrates all light types: point, spot, area, and ambient
+
+# Camera position and orientation
+camera 0 2 8 0 0 0 0 1 0 45 1.6
+
+# Ambient lighting (low blue tint)
+ambient 0.02 0.02 0.05
+
+# Materials
+material 0 diffuse 0.8 0.2 0.2    # Red diffuse
+material 1 diffuse 0.2 0.8 0.2    # Green diffuse  
+material 2 diffuse 0.2 0.2 0.8    # Blue diffuse
+material 3 diffuse 0.8 0.8 0.8    # White diffuse
+material 4 metal 0.9 0.9 0.9 0.1  # Shiny metal
+material 5 dielectric 1.0 1.0 1.0 1.5  # Glass
+material 6 emissive 2.0 1.5 0.8   # Warm emissive
+
+# Floor plane
+plane 0 -1 0 0 1 0 3
+
+# Spheres to show lighting effects
+sphere -3 0 -2 0.8 0   # Red sphere (left)
+sphere 0 0 -2 0.8 1    # Green sphere (center)
+sphere 3 0 -2 0.8 2    # Blue sphere (right)
+sphere -1.5 0 0 0.6 4  # Metal sphere
+sphere 1.5 0 0 0.6 5   # Glass sphere
+
+# Back wall spheres
+sphere -2 1.5 -5 0.5 3  # White sphere
+sphere 2 1.5 -5 0.5 3   # White sphere
+
+# Point light (bright white, above center)
+point_light 0 4 0 3.0 3.0 3.0 0.2
+
+# Spot light (warm, from left, pointing right)
+spot_light -4 3 2 1 -0.5 -0.5 2.0 1.5 1.0 20 40 0.1
+
+# Spot light (cool, from right, pointing left)
+spot_light 4 3 2 -1 -0.5 -0.5 1.0 1.5 2.5 25 50 0.15
+
+# Area light (soft fill light from behind camera)
+area_light 0 5 6 0 -0.8 -0.6 1 0 0 1.5 1.5 1.8 2.5 1.5 6
+
+# Small emissive sphere (practical light)
+sphere -2 2.5 1 0.3 6

@@ -27,7 +27,6 @@ public:
     }
     
     void save_ppm(const std::string& filename) const;
-    void save_png(const std::string& filename) const; // Simple PNG implementation
     
     int get_width() const { return width; }
     int get_height() const { return height; }

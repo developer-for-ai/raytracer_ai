@@ -23,7 +23,7 @@
 
 InputHandler::InputHandler(Camera* cam, Window* win) 
     : camera(cam), window(win), first_mouse(true), mouse_initialized(false),
-      movement_speed(300.0f), mouse_sensitivity(0.1f), yaw(-90.0f), pitch(0.0f) {
+      movement_speed(5.0f), mouse_sensitivity(0.1f), yaw(-90.0f), pitch(0.0f) {
     std::memset(keys_pressed, false, sizeof(keys_pressed));
     last_mouse_x = 0.0;
     last_mouse_y = 0.0;

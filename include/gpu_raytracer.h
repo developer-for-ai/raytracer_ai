@@ -11,8 +11,10 @@ struct GPUMaterial {
     float roughness;
     Vec3 emission; 
     float ior;
-    int type; // 0=lambertian, 1=metal, 2=dielectric, 3=emissive
-    float padding[3];
+    int type; // 0=lambertian, 1=metal, 2=dielectric, 3=emissive, 4=glossy, 5=subsurface
+    float metallic;
+    float specular;
+    float subsurface;
 };
 
 struct GPUSphere {
@@ -35,6 +37,24 @@ struct GPUCamera {
     float lens_radius;
 };
 
+struct GPULight {
+    int type;           // 0=point, 1=spot, 2=area
+    float padding1;
+    Vec3 position;
+    float padding2;
+    Vec3 intensity;
+    float radius;       // Soft shadow radius
+    Vec3 direction;     // For spot lights
+    float inner_angle;  // For spot lights (cosine)
+    Vec3 u_axis;        // For area lights
+    float outer_angle;  // For spot lights (cosine)
+    Vec3 v_axis;        // For area lights (computed)
+    float width;        // For area lights
+    float height;       // For area lights
+    int samples;        // For area lights
+    float padding3[2];
+};
+
 class GPURayTracer {
 private:
     GLuint compute_shader;
@@ -44,9 +64,11 @@ private:
     GLuint material_buffer;
     GLuint sphere_buffer;
     GLuint camera_buffer;
+    GLuint light_buffer;
     
     int window_width, window_height;
-    int num_materials, num_spheres;
+    int num_materials, num_spheres, num_lights;
+    Vec3 ambient_light;
     int frame_count;              // For temporal accumulation
     bool reset_accumulation;      // Reset flag for camera movement
     

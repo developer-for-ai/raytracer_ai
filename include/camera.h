@@ -24,8 +24,4 @@ public:
     }
     
     void update_camera();
-    Ray get_ray(float s, float t, std::mt19937& rng) const;
-    
-private:
-    Vec3 random_in_unit_disk(std::mt19937& rng) const;
 };

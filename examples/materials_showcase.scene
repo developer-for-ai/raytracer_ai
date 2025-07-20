@@ -1,0 +1,86 @@
+# Advanced Materials Showcase Scene
+# Demonstrates all material types supported by the raytracer
+camera 0 2 6 0 0 0 0 1 0 45 1.6
+background 0.2 0.3 0.5
+
+# === MATERIALS SHOWCASE ===
+
+# Basic diffuse materials
+material ground lambertian 0.5 0.5 0.5
+material red_diffuse lambertian 0.8 0.2 0.2 0.1
+material green_diffuse lambertian 0.2 0.8 0.2 0.0
+material blue_diffuse lambertian 0.2 0.2 0.8 0.2
+
+# Metal materials with varying roughness
+material mirror metal 0.9 0.9 0.9 0.0
+material rough_metal metal 0.7 0.7 0.8 0.4
+material gold metal 1.0 0.8 0.3 0.1
+material copper metal 0.8 0.5 0.3 0.05
+
+# Dielectric materials (glass) with different IOR
+material glass dielectric 1.0 1.0 1.0 1.5
+material diamond dielectric 1.0 1.0 1.0 2.4
+material water dielectric 0.9 0.95 1.0 1.33
+
+# Emissive materials (light sources)
+material white_light emissive 5 5 5
+material warm_light emissive 8 6 4
+material cool_light emissive 4 6 8
+material colored_light emissive 10 2 10
+
+# Advanced materials
+material glossy_plastic glossy 0.8 0.3 0.3 0.2 0.8
+material glossy_paint glossy 0.2 0.7 0.9 0.3 0.6
+material skin_subsurface subsurface 0.9 0.7 0.6 0.4 0.2
+material marble_subsurface subsurface 0.9 0.9 0.85 0.6 0.1
+
+# === SCENE OBJECTS ===
+
+# Large ground sphere
+sphere 0 -1000 0 1000 ground
+
+# Main display row (front) - Basic materials
+sphere -4 0 -2 0.6 red_diffuse
+sphere -2 0 -2 0.6 mirror
+sphere 0 0 -2 0.6 glass
+sphere 2 0 -2 0.6 gold
+sphere 4 0 -2 0.6 diamond
+
+# Second row - Advanced metals and dielectrics  
+sphere -3 1 -4 0.5 rough_metal
+sphere -1 1 -4 0.5 copper
+sphere 1 1 -4 0.5 water
+sphere 3 1 -4 0.5 blue_diffuse
+
+# Third row - Advanced materials
+sphere -2 2 -6 0.4 glossy_plastic
+sphere 0 2 -6 0.4 glossy_paint
+sphere 2 2 -6 0.4 skin_subsurface
+
+# Small accent spheres
+sphere -1.5 0.3 -1 0.2 glass
+sphere 1.5 0.3 -1 0.2 diamond
+sphere 0 0.3 -0.5 0.15 mirror
+
+# Light sources positioned strategically
+sphere -6 4 2 0.4 warm_light     # Main warm light (left)
+sphere 6 4 2 0.4 cool_light      # Main cool light (right)  
+sphere 0 6 -2 0.3 white_light    # Top key light
+sphere 2 1.5 1 0.2 colored_light # Accent colored light
+
+# Back walls for lighting bounce
+plane 0 0 -8 0 0 1 ground    # Back wall
+plane -8 0 0 1 0 0 ground    # Left wall  
+plane 8 0 0 -1 0 0 ground    # Right wall
+
+# Subsurface demo objects
+sphere 4 2.5 -4 0.3 marble_subsurface
+sphere -4 2.5 -4 0.3 skin_subsurface
+
+# Additional complexity
+sphere -5.5 0.3 -1.5 0.3 copper
+sphere -4.5 0.3 -1.5 0.3 gold
+sphere -3.5 0.3 -1.5 0.3 glass
+sphere 3.5 0.3 -1.5 0.3 mirror
+sphere 4.5 0.3 -1.5 0.3 water
+sphere 5.5 0.3 -1.5 0.3 diamond

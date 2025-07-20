@@ -25,13 +25,10 @@ include_directories(include)
 # Source files
 set(SOURCES
     src/main_interactive.cpp
-    src/scene.cpp
     src/camera.cpp
-    src/material.cpp
     src/geometry.cpp
     src/bvh.cpp
     src/parser.cpp
-    src/light.cpp
     src/image.cpp
     src/gpu_raytracer.cpp
     src/window.cpp

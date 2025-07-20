@@ -8,7 +8,6 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
-#include <algorithm>
 
 // Key constants
 #ifndef GLFW_KEY_ESCAPE
@@ -39,12 +38,11 @@ int main(int argc, char* argv[]) {
 
     std::string scene_file = argv[1];
     
-    // Parse command line arguments
     int window_width = 1200;
     int window_height = 800;
-    int samples_per_frame = 4;      // Increased from 1 for better quality
-    int max_depth = 10;             // Increased from 8 for better lighting
-    std::string output_filename = "";  // Empty means no screenshot capture
+    int samples_per_frame = 4;
+    int max_depth = 10;
+    std::string output_filename = "";
     
     for (int i = 2; i < argc; i++) {
         std::string arg = argv[i];
@@ -65,7 +63,12 @@ int main(int argc, char* argv[]) {
         std::cout << "Loading scene: " << scene_file << std::endl;
         
         // Load scene
-        Scene scene = Parser::parse_scene_file(scene_file);
+        Scene scene;
+        if (!Parser::parse_scene_file(scene_file, scene)) {
+            std::cerr << "❌ ERROR: Failed to load scene file: " << scene_file << std::endl;
+            std::cerr << "The program will now exit." << std::endl;
+            return 1;
+        }
         
         // If output filename is specified, render to file instead of interactive mode
         if (!output_filename.empty()) {
@@ -143,20 +146,22 @@ int main(int argc, char* argv[]) {
             std::string extension = output_filename.substr(output_filename.find_last_of('.') + 1);
             std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
             
+            std::string actual_filename = output_filename;
             if (extension == "ppm") {
                 image.save_ppm(output_filename);
             } else if (extension == "png") {
-                image.save_png(output_filename);
+                // PNG support not implemented, save as PPM instead
+                actual_filename = output_filename.substr(0, output_filename.find_last_of('.')) + ".ppm";
+                image.save_ppm(actual_filename);
             } else {
                 // Default to PPM if no extension or unsupported extension
-                std::string ppm_filename = output_filename + ".ppm";
-                image.save_ppm(ppm_filename);
-                output_filename = ppm_filename;
+                actual_filename = output_filename + ".ppm";
+                image.save_ppm(actual_filename);
             }
             
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
             std::cout << "GPU rendering completed in " << duration.count() << "ms" << std::endl;
-            std::cout << "Image saved as: " << output_filename << std::endl;
+            std::cout << "Image saved as: " << actual_filename << std::endl;
             
             glfwDestroyWindow(headless_window);
             glfwTerminate();

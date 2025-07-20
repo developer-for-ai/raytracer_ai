@@ -21,13 +21,6 @@ void Image::save_ppm(const std::string& filename) const {
     }
 }
 
-void Image::save_png(const std::string& filename) const {
-    // Simple PNG implementation using PPM as fallback
-    // In a real implementation, you'd use a library like stb_image_write
-    std::string ppm_name = filename.substr(0, filename.find_last_of('.')) + ".ppm";
-    save_ppm(ppm_name);
-}
-
 Color Image::tone_map(const Color& hdr_color) {
     // Simple Reinhard tone mapping
     Color result;

@@ -7,14 +7,6 @@ enum class LightType {
     AREA_PLANE
 };
 
-struct LightSample {
-    Vec3 position;     // Light sample position
-    Vec3 direction;    // Direction from surface to light
-    Color intensity;   // Light intensity at this sample
-    float distance;    // Distance to light
-    float pdf;         // Probability density of this sample
-};
-
 class Light {
 public:
     LightType type;
@@ -26,15 +18,6 @@ public:
         : type(t), position(pos), intensity(color), enabled(true) {}
     
     virtual ~Light() = default;
-    
-    // Sample the light from a given surface point
-    virtual LightSample sample(const Vec3& surface_point, const Vec3& surface_normal) const = 0;
-    
-    // Get the light's contribution at a specific point
-    virtual Color get_intensity(const Vec3& point) const = 0;
-    
-    // Check if the light is visible from a point (for shadow testing)
-    virtual bool is_visible_from(const Vec3& point, const Vec3& light_point) const = 0;
 };
 
 // Point Light - Omnidirectional light source
@@ -44,10 +27,6 @@ public:
     
     PointLight(const Vec3& pos, const Color& color, float rad = 0.0f)
         : Light(LightType::POINT, pos, color), radius(rad) {}
-    
-    LightSample sample(const Vec3& surface_point, const Vec3& surface_normal) const override;
-    Color get_intensity(const Vec3& point) const override;
-    bool is_visible_from(const Vec3& point, const Vec3& light_point) const override;
 };
 
 // Spot Light - Directional cone of light
@@ -62,13 +41,6 @@ public:
               float inner, float outer, float rad = 0.0f)
         : Light(LightType::SPOT, pos, color), direction(dir.normalize()),
           inner_angle(inner), outer_angle(outer), radius(rad) {}
-    
-    LightSample sample(const Vec3& surface_point, const Vec3& surface_normal) const override;
-    Color get_intensity(const Vec3& point) const override;
-    bool is_visible_from(const Vec3& point, const Vec3& light_point) const override;
-    
-private:
-    float get_cone_attenuation(const Vec3& point) const;
 };
 
 // Area Light - Rectangular plane light source
@@ -89,11 +61,4 @@ public:
         v_axis = normal.cross(u_axis).normalize();
         u_axis = v_axis.cross(normal).normalize();  // Recompute for orthogonality
     }
-    
-    LightSample sample(const Vec3& surface_point, const Vec3& surface_normal) const override;
-    Color get_intensity(const Vec3& point) const override;
-    bool is_visible_from(const Vec3& point, const Vec3& light_point) const override;
-    
-private:
-    Vec3 get_random_point_on_plane() const;
 };

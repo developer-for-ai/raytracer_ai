@@ -24,61 +24,58 @@ echo "⚙️  Configuring with CMake..."
 cmake -DCMAKE_BUILD_TYPE=Release ..
 
 # Build with all available cores
-echo "🔨 Compiling both CPU and GPU versions..."
+echo "🔨 Compiling GPU ray tracer..."
 make -j$(nproc)
 
-# Check if both builds were successful
-if [ -f "./bin/RayTracer" ] && [ -f "./bin/RayTracerGPU" ]; then
+# Check if GPU build was successful
+if [ -f "./bin/RayTracerGPU" ]; then
     echo "✅ Build successful!"
-    echo "   📱 CPU Raytracer: ./bin/RayTracer"
     echo "   🎮 GPU Raytracer: ./bin/RayTracerGPU"
     echo ""
     
-    # Quick test of CPU version
-    echo "🧪 Testing CPU raytracer..."
+    # Test GPU version (headless mode for build verification)
+    echo "🧪 Testing GPU raytracer..."
     cd ..
-    ./build/bin/RayTracer examples/realtime.scene -w 200 -h 150 -s 10 -o quick_test_cpu.ppm
+    ./build/bin/RayTracerGPU examples/realtime.scene -o quick_test_gpu.ppm -w 200 -h 150 -s 4
     
-    if [ -f "quick_test_cpu.ppm" ]; then
-        echo "✅ CPU test successful!"
-        
-        # Test GPU version (will fail without display, but should compile)
-        echo "🧪 Testing GPU raytracer compilation..."
-        timeout 5 ./build/bin/RayTracerGPU examples/realtime.scene 2>/dev/null || echo "✅ GPU binary runs (display not available in this environment)"
+    if [ -f "quick_test_gpu.ppm" ]; then
+        echo "✅ GPU test successful!"
         
         echo ""
         echo "🎯 Usage Examples:"
         echo "================="
         echo ""
-        echo "📱 CPU (Offline High-Quality Rendering):"
-        echo "  ./build/bin/RayTracer examples/showcase.scene -w 1920 -h 1080 -s 200"
-        echo "  ./build/bin/RayTracer examples/lit_scene.scene -w 800 -h 600 -s 100"
-        echo "  ./build/bin/RayTracer examples/cornell_box.scene -w 800 -h 600 -s 100"
-        echo "  ./build/bin/RayTracer examples/tetrahedron.obj -w 600 -h 600 -s 50"
-        echo ""
-        echo "🎮 GPU (Interactive Real-Time or File Output):"  
+        echo "🎮 GPU Interactive Ray Tracer:"
         echo "  ./build/bin/RayTracerGPU examples/realtime.scene"
-        echo "  ./build/bin/RayTracerGPU examples/lit_scene.scene -w 1200 -h 800"
-        echo "  ./build/bin/RayTracerGPU examples/showcase.scene -o gpu_render.ppm -w 1920 -h 1080 -s 16"
+        echo "  ./build/bin/RayTracerGPU examples/advanced_scene.scene -w 1200 -h 800"
+        echo "  ./build/bin/RayTracerGPU examples/materials_showcase.scene"
+        echo "  ./build/bin/RayTracerGPU examples/lighting_demo.scene"
         echo ""
-        echo "🎮 Interactive Controls (GPU version):"
+        echo "🎮 GPU File Output (Headless):"
+        echo "  ./build/bin/RayTracerGPU examples/showcase.scene -o gpu_render.ppm -w 1920 -h 1080 -s 16"
+        echo "  ./build/bin/RayTracerGPU examples/materials_showcase.scene -o materials.ppm -w 800 -h 600 -s 8"
+        echo "  ./build/bin/RayTracerGPU examples/lighting_demo.scene -o lighting.ppm -w 1200 -h 900 -s 12"
+        echo ""
+        echo "🎮 Interactive Controls:"
         echo "  WASD - Move camera"
         echo "  Click - Capture/release mouse for looking"  
+        echo "  Arrow Keys - Look around (alternative to mouse)"
         echo "  Space/Shift - Move up/down"
+        echo "  R - Reset camera position"
         echo "  F1 - Toggle detailed stats"
         echo "  ESC - Exit"
         echo ""
-        echo "⚡ Performance Comparison:"
-        echo "  CPU: High quality, 200-1000 samples, minutes to hours"
-        echo "  GPU: Real-time, 1-16 samples, 30-60 FPS"
+        echo "⚡ Performance:"
+        echo "  Real-time: 1-16 samples, 30-60 FPS interactive"
+        echo "  File output: 4-64 samples for high-quality renders"
         echo ""
-        echo "🌟 The future is interactive ray tracing!"
+        echo "🌟 Interactive GPU ray tracing - the future is here!"
         
     else
-        echo "❌ CPU test failed!"
+        echo "❌ GPU test failed!"
         exit 1
     fi
 else
-    echo "❌ Build failed!"
+    echo "❌ Build failed - GPU raytracer not found!"
     exit 1
 fi

@@ -33,10 +33,6 @@ public:
         lights.push_back(light);
     }
     
-    // Calculate lighting contribution at a point
-    Color calculate_lighting(const Vec3& point, const Vec3& normal, const Vec3& view_dir, 
-                           const Material& material) const;
-    
     void build_acceleration_structure() {
         if (!objects.empty()) {
             bvh = std::make_unique<BVH>(objects);

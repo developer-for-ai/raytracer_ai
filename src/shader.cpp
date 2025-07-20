@@ -115,7 +115,9 @@ struct Material {
     vec3 emission;
     float ior;
     int type;
-    float padding[3];
+    float metallic;
+    float specular;
+    float subsurface;
 };
 
 struct Sphere {
@@ -140,6 +142,24 @@ struct GPUCamera {
     float lens_radius;
 };
 
+struct Light {
+    int type;           // 0=point, 1=spot, 2=area
+    float padding1;
+    vec3 position;
+    float padding2;
+    vec3 intensity;
+    float radius;       // Soft shadow radius
+    vec3 direction;     // For spot lights
+    float inner_angle;  // For spot lights (cosine)
+    vec3 u_axis;        // For area lights
+    float outer_angle;  // For spot lights (cosine)
+    vec3 v_axis;        // For area lights (computed)
+    float width;        // For area lights
+    float height;       // For area lights
+    int samples;        // For area lights
+    float padding3[2];
+};
+
 layout(std430, binding = 2) buffer MaterialBuffer {
     Material materials[];
 };
@@ -152,23 +172,25 @@ layout(std430, binding = 4) buffer CameraBuffer {
     GPUCamera camera;
 };
 
+layout(std430, binding = 5) buffer LightBuffer {
+    Light lights[];
+};
+
 uniform int max_depth;
 uniform int samples_per_pixel;
 uniform float time;
 uniform int frame_count;
 uniform bool reset_accumulation;
+uniform vec3 ambient_light;
 
-// Improved RNG state - use multiple seeds for better distribution
 uvec4 rng_state;
 
-// Better hash function for improved random distribution
 uint pcg_hash(uint seed) {
     uint state = seed * 747796405u + 2891336453u;
     uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
     return (word >> 22u) ^ word;
 }
 
-// Initialize RNG with better seeding
 void init_random(uvec2 pixel, uint frame) {
     rng_state.x = pcg_hash(pixel.x + 1920u * pixel.y);
     rng_state.y = pcg_hash(rng_state.x + frame);
@@ -176,8 +198,8 @@ void init_random(uvec2 pixel, uint frame) {
     rng_state.w = pcg_hash(rng_state.z + pixel.y);
 }
 
-// Xorshift128+ RNG for better quality randomness
 float random() {
+    // Xorshift128+ RNG
     uvec4 t = rng_state;
     uvec4 s = rng_state;
     t.x = s.x ^ (s.x << 11u);
@@ -197,8 +219,8 @@ vec3 random_vec3() {
     return vec3(random(), random(), random());
 }
 
-// Improved sampling in unit sphere using rejection sampling with early bailout
 vec3 random_in_unit_sphere() {
+    // Rejection sampling
     vec3 p;
     int attempts = 0;
     do {
@@ -206,14 +228,12 @@ vec3 random_in_unit_sphere() {
         attempts++;
     } while (dot(p, p) >= 1.0 && attempts < 10);
     
-    // Fallback to normalize if rejection sampling fails
     if (attempts >= 10) {
         p = normalize(random_vec3() - 0.5);
     }
     return p;
 }
 
-// Cosine-weighted hemisphere sampling for better importance sampling
 vec3 random_cosine_direction() {
     float r1 = random();
     float r2 = random();
@@ -230,7 +250,6 @@ vec3 random_unit_vector() {
     return normalize(random_in_unit_sphere());
 }
 
-// Blue noise-like stratified sampling for better pixel coverage
 vec2 stratified_sample(int sample_index, int total_samples) {
     int sqrt_samples = int(sqrt(float(total_samples)));
     if (sqrt_samples * sqrt_samples < total_samples) sqrt_samples++;
@@ -299,6 +318,113 @@ bool hit_world(Ray ray, float t_min, float t_max, out HitRecord rec) {
     return hit_anything;
 }
 
+// Check if a point is in shadow from a light source
+bool in_shadow(vec3 point, vec3 light_pos, float max_distance) {
+    vec3 shadow_dir = light_pos - point;
+    float distance = length(shadow_dir);
+    if (distance > max_distance) return false;
+    
+    shadow_dir = normalize(shadow_dir);
+    Ray shadow_ray = Ray(point + shadow_dir * 0.001, shadow_dir);
+    HitRecord shadow_rec;
+    
+    return hit_world(shadow_ray, 0.001, distance - 0.001, shadow_rec);
+}
+
+// Calculate lighting contribution from all lights
+vec3 calculate_lighting(vec3 point, vec3 normal, Material mat) {
+    vec3 total_light = ambient_light;
+    
+    for (int i = 0; i < lights.length(); i++) {
+        Light light = lights[i];
+        vec3 light_contribution = vec3(0.0);
+        
+        if (light.type == 0) {
+            // Point light
+            vec3 light_dir = light.position - point;
+            float distance = length(light_dir);
+            light_dir = normalize(light_dir);
+            
+            // Distance attenuation (inverse square)
+            float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
+            
+            // Check shadow with soft shadows
+            bool shadowed = false;
+            if (light.radius > 0.0) {
+                // Soft shadows - sample multiple points on light sphere
+                int shadow_samples = 4;
+                int shadow_hits = 0;
+                for (int s = 0; s < shadow_samples; s++) {
+                    vec3 offset = random_in_unit_sphere() * light.radius;
+                    vec3 sample_pos = light.position + offset;
+                    if (in_shadow(point, sample_pos, distance + light.radius)) {
+                        shadow_hits++;
+                    }
+                }
+                float shadow_factor = 1.0 - float(shadow_hits) / float(shadow_samples);
+                light_contribution = light.intensity * attenuation * max(0.0, dot(normal, light_dir)) * shadow_factor;
+            } else {
+                // Hard shadows
+                if (!in_shadow(point, light.position, distance)) {
+                    light_contribution = light.intensity * attenuation * max(0.0, dot(normal, light_dir));
+                }
+            }
+        } else if (light.type == 1) {
+            // Spot light
+            vec3 light_dir = light.position - point;
+            float distance = length(light_dir);
+            light_dir = normalize(light_dir);
+            
+            // Check if point is within spot cone
+            float spot_cos = dot(-light_dir, light.direction);
+            if (spot_cos > light.outer_angle) {
+                // Distance attenuation
+                float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
+                
+                // Spot attenuation (smooth falloff between inner and outer angles)
+                float spot_intensity = 1.0;
+                if (spot_cos < light.inner_angle) {
+                    spot_intensity = (spot_cos - light.outer_angle) / (light.inner_angle - light.outer_angle);
+                }
+                
+                // Shadow testing
+                if (!in_shadow(point, light.position, distance)) {
+                    light_contribution = light.intensity * attenuation * spot_intensity * max(0.0, dot(normal, light_dir));
+                }
+            }
+        } else if (light.type == 2) {
+            // Area light - sample multiple points on the rectangular area
+            int area_samples = max(1, light.samples);
+            vec3 area_contribution = vec3(0.0);
+            
+            for (int s = 0; s < area_samples; s++) {
+                // Random point on rectangle
+                vec2 rand_uv = random_vec2() - 0.5; // [-0.5, 0.5]
+                vec3 sample_pos = light.position + 
+                                 rand_uv.x * light.width * light.u_axis + 
+                                 rand_uv.y * light.height * light.v_axis;
+                
+                vec3 light_dir = sample_pos - point;
+                float distance = length(light_dir);
+                light_dir = normalize(light_dir);
+                
+                // Distance attenuation
+                float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
+                
+                // Shadow testing
+                if (!in_shadow(point, sample_pos, distance)) {
+                    area_contribution += light.intensity * attenuation * max(0.0, dot(normal, light_dir));
+                }
+            }
+            light_contribution = area_contribution / float(area_samples);
+        }
+        
+        total_light += light_contribution;
+    }
+    
+    return total_light;
+}
+
 // Improved material scattering with importance sampling
 vec3 ray_color(Ray ray, int depth) {
     vec3 color = vec3(1.0);
@@ -318,7 +444,10 @@ vec3 ray_color(Ray ray, int depth) {
             vec3 new_attenuation = mat.albedo;
             
             if (mat.type == 0) {
-                // Lambertian with cosine-weighted importance sampling
+                // Lambertian with proper lighting calculation
+                vec3 lighting = calculate_lighting(rec.point, rec.normal, mat);
+                
+                // For path tracing, we still need to scatter the ray
                 vec3 w = rec.normal;
                 vec3 u = normalize(cross(abs(w.x) > 0.1 ? vec3(0,1,0) : vec3(1,0,0), w));
                 vec3 v = cross(w, u);
@@ -327,10 +456,10 @@ vec3 ray_color(Ray ray, int depth) {
                 vec3 scatter_direction = cosine_dir.x * u + cosine_dir.y * v + cosine_dir.z * w;
                 
                 target = rec.point + scatter_direction;
-                // Cosine-weighted sampling already accounts for Lambert's law
-                new_attenuation *= mat.albedo;
+                // Apply lighting to the diffuse material
+                new_attenuation = mat.albedo * lighting;
             } else if (mat.type == 1) {
-                // Metal with better reflection handling
+                // Metal with better reflection handling and lighting
                 vec3 reflected = reflect(normalize(ray.direction), rec.normal);
                 vec3 fuzzed = reflected + mat.roughness * random_in_unit_sphere();
                 target = rec.point + fuzzed;
@@ -339,6 +468,10 @@ vec3 ray_color(Ray ray, int depth) {
                 if (dot(fuzzed, rec.normal) <= 0.0) {
                     return vec3(0.0);
                 }
+                
+                // Apply lighting to metal surfaces too
+                vec3 lighting = calculate_lighting(rec.point, rec.normal, mat);
+                new_attenuation = mat.albedo * lighting;
             } else if (mat.type == 2) {
                 // Improved dielectric with Schlick approximation
                 float cos_theta = min(dot(-normalize(ray.direction), rec.normal), 1.0);
@@ -360,7 +493,43 @@ vec3 ray_color(Ray ray, int depth) {
                 }
                 
                 target = rec.point + direction;
-                new_attenuation = vec3(1.0); // Glass doesn't absorb light
+                // Apply subtle lighting even to glass (for colored glass effects)
+                vec3 lighting = calculate_lighting(rec.point, rec.normal, mat);
+                new_attenuation = mix(vec3(1.0), mat.albedo * lighting, 0.1);
+            } else if (mat.type == 4) {
+                // Glossy material - blend between diffuse and specular reflection
+                vec3 reflected = reflect(normalize(ray.direction), rec.normal);
+                vec3 diffuse_dir = random_cosine_direction();
+                
+                // Create orthonormal basis around normal
+                vec3 w = rec.normal;
+                vec3 u = normalize(cross(abs(w.x) > 0.1 ? vec3(0,1,0) : vec3(1,0,0), w));
+                vec3 v = cross(w, u);
+                vec3 diffuse_target = diffuse_dir.x * u + diffuse_dir.y * v + diffuse_dir.z * w;
+                
+                // Blend between specular and diffuse based on roughness
+                vec3 specular_target = reflected + mat.roughness * random_in_unit_sphere();
+                target = rec.point + mix(specular_target, diffuse_target, mat.roughness);
+                
+                // Mix specular reflection and diffuse color
+                vec3 lighting = calculate_lighting(rec.point, rec.normal, mat);
+                new_attenuation = mix(vec3(mat.specular), mat.albedo, mat.roughness) * lighting;
+            } else if (mat.type == 5) {
+                // Subsurface scattering approximation
+                vec3 w = rec.normal;
+                vec3 u = normalize(cross(abs(w.x) > 0.1 ? vec3(0,1,0) : vec3(1,0,0), w));
+                vec3 v = cross(w, u);
+                
+                // Add some randomness for subsurface effect
+                vec3 scatter_dir = random_cosine_direction();
+                // Bend direction slightly inward for subsurface effect
+                scatter_dir = normalize(mix(scatter_dir, -rec.normal, mat.subsurface * 0.3));
+                
+                target = rec.point + scatter_dir.x * u + scatter_dir.y * v + scatter_dir.z * w;
+                
+                // Subsurface materials absorb and scatter light
+                vec3 lighting = calculate_lighting(rec.point, rec.normal, mat);
+                new_attenuation = mat.albedo * (1.0 + mat.subsurface) * lighting;
             }
             
             // Update ray for next iteration

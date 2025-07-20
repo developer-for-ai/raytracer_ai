@@ -4,12 +4,17 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <vector>
+#include <cmath>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 GPURayTracer::GPURayTracer(int width, int height) 
-    : window_width(width), window_height(height), num_materials(0), num_spheres(0),
+    : window_width(width), window_height(height), num_materials(0), num_spheres(0), num_lights(0),
       compute_shader(0), shader_program(0), output_texture(0), accumulation_texture(0),
-      material_buffer(0), sphere_buffer(0), camera_buffer(0),
-      frame_count(0), reset_accumulation(true) {
+      material_buffer(0), sphere_buffer(0), camera_buffer(0), light_buffer(0),
+      ambient_light(0.1f, 0.1f, 0.1f), frame_count(0), reset_accumulation(true) {
 }
 
 GPURayTracer::~GPURayTracer() {
@@ -18,23 +23,21 @@ GPURayTracer::~GPURayTracer() {
     if (material_buffer) glDeleteBuffers(1, &material_buffer);
     if (sphere_buffer) glDeleteBuffers(1, &sphere_buffer);
     if (camera_buffer) glDeleteBuffers(1, &camera_buffer);
+    if (light_buffer) glDeleteBuffers(1, &light_buffer);
     if (shader_program) glDeleteProgram(shader_program);
 }
 
 bool GPURayTracer::initialize() {
-    // Initialize GLEW if not already done
     if (glewInit() != GLEW_OK) {
         std::cerr << "Failed to initialize GLEW" << std::endl;
         return false;
     }
     
-    // Check for compute shader support
     if (!GLEW_ARB_compute_shader) {
         std::cerr << "Compute shaders not supported" << std::endl;
         return false;
     }
     
-    // Create compute shader program
     if (!create_compute_program()) {
         return false;
     }
@@ -59,6 +62,7 @@ bool GPURayTracer::initialize() {
     glGenBuffers(1, &material_buffer);
     glGenBuffers(1, &sphere_buffer);
     glGenBuffers(1, &camera_buffer);
+    glGenBuffers(1, &light_buffer);
     
     return true;
 }
@@ -107,12 +111,17 @@ void GPURayTracer::load_scene(const Scene& scene) {
         gpu_mat.roughness = mat->roughness;
         gpu_mat.emission = mat->emission;
         gpu_mat.ior = mat->ior;
+        gpu_mat.metallic = mat->metallic;
+        gpu_mat.specular = mat->specular;
+        gpu_mat.subsurface = mat->subsurface;
         
         switch (mat->type) {
             case MaterialType::LAMBERTIAN: gpu_mat.type = 0; break;
             case MaterialType::METAL: gpu_mat.type = 1; break;
             case MaterialType::DIELECTRIC: gpu_mat.type = 2; break;
             case MaterialType::EMISSIVE: gpu_mat.type = 3; break;
+            case MaterialType::GLOSSY: gpu_mat.type = 4; break;
+            case MaterialType::SUBSURFACE: gpu_mat.type = 5; break;
         }
         
         gpu_materials.push_back(gpu_mat);
@@ -134,6 +143,40 @@ void GPURayTracer::load_scene(const Scene& scene) {
     num_materials = gpu_materials.size();
     num_spheres = gpu_spheres.size();
     
+    // Convert lights to GPU format
+    std::vector<GPULight> gpu_lights;
+    for (const auto& light : scene.lights) {
+        GPULight gpu_light = {};
+        
+        if (auto point_light = std::dynamic_pointer_cast<PointLight>(light)) {
+            gpu_light.type = 0; // Point
+            gpu_light.position = point_light->position;
+            gpu_light.intensity = point_light->intensity;
+            gpu_light.radius = point_light->radius;
+        } else if (auto spot_light = std::dynamic_pointer_cast<SpotLight>(light)) {
+            gpu_light.type = 1; // Spot
+            gpu_light.position = spot_light->position;
+            gpu_light.intensity = spot_light->intensity;
+            gpu_light.radius = spot_light->radius;
+            gpu_light.direction = spot_light->direction;
+            gpu_light.inner_angle = cos(spot_light->inner_angle * M_PI / 180.0f); // Convert to cosine
+            gpu_light.outer_angle = cos(spot_light->outer_angle * M_PI / 180.0f); // Convert to cosine
+        } else if (auto area_light = std::dynamic_pointer_cast<AreaPlaneLight>(light)) {
+            gpu_light.type = 2; // Area
+            gpu_light.position = area_light->position;
+            gpu_light.intensity = area_light->intensity;
+            gpu_light.u_axis = area_light->u_axis;
+            gpu_light.v_axis = area_light->v_axis;
+            gpu_light.width = area_light->width;
+            gpu_light.height = area_light->height;
+            gpu_light.samples = area_light->samples;
+        }
+        
+        gpu_lights.push_back(gpu_light);
+    }
+    
+    num_lights = gpu_lights.size();
+    
     // Upload materials
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, material_buffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, gpu_materials.size() * sizeof(GPUMaterial), 
@@ -145,6 +188,15 @@ void GPURayTracer::load_scene(const Scene& scene) {
     glBufferData(GL_SHADER_STORAGE_BUFFER, gpu_spheres.size() * sizeof(GPUSphere), 
                  gpu_spheres.data(), GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sphere_buffer);
+    
+    // Upload lights
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, light_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, gpu_lights.size() * sizeof(GPULight), 
+                 gpu_lights.data(), GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, light_buffer);
+    
+    // Store ambient light
+    ambient_light = scene.ambient_light;
     
     // Reset accumulation when scene changes
     reset_accumulation_buffer();
@@ -181,6 +233,8 @@ void GPURayTracer::render(const Camera& camera, int samples, int max_depth) {
                 static_cast<float>(glfwGetTime()));
     glUniform1i(glGetUniformLocation(shader_program, "frame_count"), frame_count);
     glUniform1i(glGetUniformLocation(shader_program, "reset_accumulation"), reset_accumulation ? 1 : 0);
+    glUniform3f(glGetUniformLocation(shader_program, "ambient_light"), 
+                ambient_light.x, ambient_light.y, ambient_light.z);
     
     // Clear reset flag after first use
     if (reset_accumulation) {
