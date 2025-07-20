@@ -36,7 +36,7 @@ if [ -f "./bin/RayTracerGPU" ]; then
     # Test GPU version (headless mode for build verification)
     echo "🧪 Testing GPU raytracer..."
     cd ..
-    ./build/bin/RayTracerGPU examples/realtime.scene -o quick_test_gpu.ppm -w 200 -h 150 -s 4
+    ./build/bin/RayTracerGPU examples/cornell_box.scene -o quick_test_gpu.ppm -w 200 -h 150 -s 4
     
     if [ -f "quick_test_gpu.ppm" ]; then
         echo "✅ GPU test successful!"
@@ -46,8 +46,7 @@ if [ -f "./bin/RayTracerGPU" ]; then
         echo "================="
         echo ""
         echo "🎮 GPU Interactive Ray Tracer:"
-        echo "  ./build/bin/RayTracerGPU examples/realtime.scene"
-        echo "  ./build/bin/RayTracerGPU examples/advanced_scene.scene -w 1200 -h 800"
+        echo "  ./build/bin/RayTracerGPU examples/cornell_box.scene"
         echo "  ./build/bin/RayTracerGPU examples/materials_showcase.scene"
         echo "  ./build/bin/RayTracerGPU examples/lighting_demo.scene"
         echo ""

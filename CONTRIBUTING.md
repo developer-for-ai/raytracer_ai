@@ -32,7 +32,6 @@ Thank you for your interest in contributing to this project!
 Before submitting:
 ```bash
 ./build.sh          # Builds and tests both CPU and GPU versions
-./benchmark.sh      # Performance testing
 ```
 
 ## Commit Guidelines

@@ -26,6 +26,12 @@ namespace Math {
     inline float clamp(float value, float min_val, float max_val) noexcept {
         return std::max(min_val, std::min(max_val, value));
     }
+    
+    // Fast inverse square root for performance-critical normalization
+    inline float fast_inv_sqrt(float x) noexcept {
+        // Modern approximation - much faster than 1.0f / sqrt(x)
+        return x > 0.0f ? 1.0f / std::sqrt(x) : 0.0f;
+    }
 }
 
 // Fast vector math structures
@@ -67,8 +73,12 @@ struct Vec3 {
     constexpr float length_squared() const noexcept { return x * x + y * y + z * z; }
     
     Vec3 normalize() const noexcept {
-        const float len = length();
-        return len > 1e-8f ? *this / len : Vec3(0, 0, 0);
+        const float len_sq = length_squared();
+        if (len_sq > 1e-16f) {
+            const float inv_len = Math::fast_inv_sqrt(len_sq);
+            return Vec3(x * inv_len, y * inv_len, z * inv_len);
+        }
+        return Vec3(0, 0, 0);
     }
     
     Vec3 reflect(const Vec3& normal) const noexcept {

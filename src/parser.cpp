@@ -41,6 +41,102 @@ bool Parser::parse_obj_file(const std::string& filename, Scene& scene) {
     auto default_material = std::make_shared<Material>(MaterialType::LAMBERTIAN, Color(0.8f, 0.8f, 0.8f));
     scene.add_material(default_material);
     
+    // Parse vertices first to determine bounds for camera positioning
+    Vec3 min_bounds{1000000.0f, 1000000.0f, 1000000.0f};
+    Vec3 max_bounds{-1000000.0f, -1000000.0f, -1000000.0f};
+    
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        std::string prefix;
+        iss >> prefix;
+        
+        if (prefix == "v") {
+            // Vertex
+            float x, y, z;
+            iss >> x >> y >> z;
+            Vec3 vertex(x, y, z);
+            vertices.push_back(vertex);
+            
+            // Update bounds
+            min_bounds.x = std::min(min_bounds.x, x);
+            min_bounds.y = std::min(min_bounds.y, y);
+            min_bounds.z = std::min(min_bounds.z, z);
+            max_bounds.x = std::max(max_bounds.x, x);
+            max_bounds.y = std::max(max_bounds.y, y);
+            max_bounds.z = std::max(max_bounds.z, z);
+        } else if (prefix == "f") {
+            // Face - simple triangulation (assumes triangular faces)
+            std::vector<int> face_indices;
+            std::string vertex_data;
+            
+            while (iss >> vertex_data) {
+                // Parse vertex/texture/normal format (v/vt/vn)
+                size_t slash_pos = vertex_data.find('/');
+                std::string vertex_str = (slash_pos != std::string::npos) ? 
+                                       vertex_data.substr(0, slash_pos) : vertex_data;
+                
+                try {
+                    int vertex_index = std::stoi(vertex_str) - 1; // OBJ indices are 1-based
+                    if (vertex_index < 0) {
+                        ErrorHandling::Logger::warning("Invalid negative vertex index in OBJ file, skipping face");
+                        face_indices.clear();
+                        break;
+                    }
+                    face_indices.push_back(vertex_index);
+                } catch (const std::exception& e) {
+                    ErrorHandling::Logger::warning("Invalid vertex index '" + vertex_str + "' in OBJ file, skipping face");
+                    face_indices.clear();
+                    break;
+                }
+            }
+            
+            // Create triangles (fan triangulation for polygons with more than 3 vertices)
+            if (face_indices.size() >= 3) {
+                for (size_t i = 1; i < face_indices.size() - 1; i++) {
+                    if (static_cast<size_t>(face_indices[0]) < vertices.size() && 
+                        static_cast<size_t>(face_indices[i]) < vertices.size() && 
+                        static_cast<size_t>(face_indices[i + 1]) < vertices.size()) {
+                        scene.add_object(std::make_shared<Triangle>(
+                            vertices[face_indices[0]],
+                            vertices[face_indices[i]],
+                            vertices[face_indices[i + 1]],
+                            0
+                        ));
+                    } else {
+                        ErrorHandling::Logger::warning("Vertex index out of bounds in OBJ file, skipping triangle");
+                    }
+                }
+            }
+        }
+    }
+    
+    // Set up camera based on model bounds for OBJ files
+    if (vertices.size() > 0) {
+        Vec3 center = (min_bounds + max_bounds) * 0.5f;
+        Vec3 size = max_bounds - min_bounds;
+        float max_dimension = std::max({size.x, size.y, size.z});
+        
+        // Position camera to view the entire model
+        Vec3 camera_pos = center + Vec3(0.0f, max_dimension * 0.3f, max_dimension * 1.5f);
+        Vec3 camera_target = center;
+        Vec3 camera_up(0.0f, 1.0f, 0.0f);
+        
+        scene.camera = Camera(camera_pos, camera_target, camera_up, 50.0f, 16.0f/9.0f);
+    }
+    
+    return true;
+}
+
+bool Parser::parse_obj_file_with_material(const std::string& filename, Scene& scene, int material_id) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        ErrorHandling::Logger::error("Could not open file: " + filename);
+        return false;
+    }
+    
+    std::vector<Vec3> vertices;
+    std::string line;
+    
     while (std::getline(file, line)) {
         std::istringstream iss(line);
         std::string prefix;
@@ -87,7 +183,7 @@ bool Parser::parse_obj_file(const std::string& filename, Scene& scene) {
                             vertices[face_indices[0]],
                             vertices[face_indices[i]],
                             vertices[face_indices[i + 1]],
-                            0
+                            material_id  // Use the specified material_id instead of 0
                         ));
                     } else {
                         ErrorHandling::Logger::warning("Vertex index out of bounds in OBJ file, skipping triangle");
@@ -348,6 +444,29 @@ bool Parser::parse_scene_description_file(const std::string& filename, Scene& sc
                 ErrorHandling::Logger::error("Invalid ambient format at line  at line " + std::to_string(line_number) + ": " + line);
                 return false;
             }
+            has_valid_content = true;
+        } else if (command == "load_obj") {
+            std::string obj_filename, material_name;
+            if (!(iss >> obj_filename >> material_name)) {
+                ErrorHandling::Logger::error("Invalid load_obj format at line " + std::to_string(line_number) + ": " + line);
+                return false;
+            }
+            
+            // Find material by name in our local material_map
+            int material_id = -1;
+            if (material_map.find(material_name) != material_map.end()) {
+                material_id = material_map[material_name];
+            } else {
+                ErrorHandling::Logger::error("Material '" + material_name + "' not found for load_obj at line " + std::to_string(line_number));
+                return false;
+            }
+            
+            // Load OBJ file with specific material
+            if (!Parser::parse_obj_file_with_material(obj_filename, scene, material_id)) {
+                ErrorHandling::Logger::error("Failed to load OBJ file '" + obj_filename + "' at line " + std::to_string(line_number));
+                return false;
+            }
+            
             has_valid_content = true;
         } else {
             // Unrecognized command - this is an error

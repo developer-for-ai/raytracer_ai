@@ -104,7 +104,7 @@ make -j$(nproc)
 ### Quick Start
 ```bash
 # Interactive real-time exploration (requires display)
-./build/bin/RayTracerGPU examples/realtime.scene
+./build/bin/RayTracerGPU examples/cornell_box.scene
 
 # High-quality file output (headless rendering)
 ./build/bin/RayTracerGPU examples/showcase.scene -o render.ppm -w 1920 -h 1080 -s 16
@@ -148,17 +148,17 @@ When running the GPU raytracer:
 
 ### Interactive Real-Time Rendering
 ```bash
-# Real-time exploration with default settings
-./build/bin/RayTracerGPU examples/realtime.scene
-
-# High-resolution interactive mode
-./build/bin/RayTracerGPU examples/advanced_scene.scene -w 1920 -h 1080
+# Cornell Box classic reference scene
+./build/bin/RayTracerGPU examples/cornell_box.scene
 
 # Materials showcase with real-time interaction
 ./build/bin/RayTracerGPU examples/materials_showcase.scene -w 1200 -h 800
 
 # Comprehensive lighting demonstration
 ./build/bin/RayTracerGPU examples/lighting_demo.scene
+
+# Complete temple scene with OBJ geometry
+./build/bin/RayTracerGPU examples/temple_final_complete.scene
 ```
 
 ### High-Quality File Output (Headless)
@@ -172,8 +172,8 @@ When running the GPU raytracer:
 # Lighting showcase
 ./build/bin/RayTracerGPU examples/lighting_demo.scene -o lighting.ppm -w 1200 -h 900 -s 24
 
-# Quick preview render
-./build/bin/RayTracerGPU examples/realtime.scene -o preview.ppm -w 800 -h 600 -s 8
+# Cornell Box reference scene
+./build/bin/RayTracerGPU examples/cornell_box.scene -o cornell.ppm -w 800 -h 600 -s 8
 ```
 
 ### OBJ File Rendering
@@ -191,16 +191,41 @@ When running the GPU raytracer:
 ## 🔬 Example Scenes Included
 
 ### Scene Files (.scene)
-1. **realtime.scene**: Optimized for interactive GPU rendering with basic lighting
-2. **advanced_scene.scene**: Complex scene with multiple light types and advanced materials
-3. **materials_showcase.scene**: Comprehensive demonstration of all material types
-4. **lighting_demo.scene**: Complete showcase of all lighting features (point, spot, area, ambient)
-5. **cornell_box.scene**: Classic computer graphics test scene
-6. **showcase.scene**: Overall feature demonstration with balanced complexity
+1. **cornell_box.scene**: Classic Cornell Box reference scene with colored walls
+2. **materials_showcase.scene**: Comprehensive demonstration of all material types
+3. **lighting_demo.scene**: Complete showcase of all lighting features (point, spot, area, ambient)
+4. **showcase.scene**: Overall feature demonstration with balanced complexity
+5. **temple_final_complete.scene**: Indian temple scene with OBJ geometry, multiple materials, and advanced lighting
+6. **tetrahedron_view.scene**: Simple OBJ loading demo using tetrahedron.obj
 
 ### 3D Models (.obj)
 7. **tetrahedron.obj**: Simple 4-triangle tetrahedron for testing triangle rendering
-8. **tetrahedron_view.scene**: Scene file with proper camera positioning for tetrahedron viewing
+8. **indian_temple.obj**: Detailed Indian-style temple architecture with 294 triangles
+9. **triangle_grid.obj**: Performance testing mesh with 12 triangles
+10. **large_triangle_grid.obj**: Large performance test mesh with 108 triangles
+11. **massive_triangle_grid.obj**: Performance test mesh with 432 triangles
+
+### 🚶 Temple Exploration Guide
+The Indian temple scenes offer immersive architectural exploration:
+
+```bash
+# Interactive temple exploration (best experience - automatic camera positioning)
+./build/bin/RayTracerGPU examples/indian_temple.obj
+
+# Complete temple with all features (OBJ + decorations + lighting)
+./build/bin/RayTracerGPU examples/temple_final_complete.scene
+
+# High-quality temple renders
+./build/bin/RayTracerGPU examples/temple_final_complete.scene -o temple.ppm -w 1600 -h 1200 -s 8
+```
+
+**Temple Features:**
+- 🏛️ **Authentic Indian architecture** with pillars, altar, and sacred spaces
+- 🕯️ **Advanced lighting system** with torches, mystical glows, and sunlight
+- 💎 **Rich materials** including marble, gold, bronze, sacred crystals, and gems
+- 🚶 **Walkable interior** with floor planes and optimized geometry
+- 🌟 **Atmospheric elements** including floating orbs, incense, and divine lighting
+- ⚡ **Performance optimized** for real-time exploration at 15+ FPS with 200+ triangles
 
 ### Output Examples  
 Generated PPM files from recent renders are included to showcase capabilities.
@@ -254,10 +279,14 @@ raytracer_ai/
 │   ├── window.cpp       # OpenGL context management
 │   └── input.cpp        # Input event processing
 ├── examples/            # Scene files showcasing features
-│   ├── realtime.scene   # Real-time optimized scene
-│   ├── lighting_demo.scene # Complete lighting showcase
+│   ├── cornell_box.scene    # Classic Cornell Box reference
+│   ├── lighting_demo.scene  # Complete lighting showcase
 │   ├── materials_showcase.scene # All material types
-│   └── advanced_scene.scene # Complex scene demonstration
+│   ├── showcase.scene       # Overall feature demonstration
+│   ├── temple_final_complete.scene # Temple with OBJ architecture
+│   ├── tetrahedron_view.scene # Simple OBJ loading demo
+│   ├── tetrahedron.obj      # 4-triangle test model
+│   └── indian_temple.obj    # 294-triangle temple architecture
 ├── build.sh            # Automated build script
 ├── CMakeLists.txt      # Build configuration
 └── README.md           # This file

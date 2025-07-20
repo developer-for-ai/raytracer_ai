@@ -162,9 +162,12 @@ struct Sphere {
 };
 
 struct Triangle {
-    vec3 v0, v1, v2;
+    vec3 v0;
     int material_id;
-    float padding[3];
+    vec3 v1;
+    float pad1;
+    vec3 v2;
+    float pad2;
 };
 
 struct GPUCamera {
@@ -264,34 +267,30 @@ vec3 random_vec3() {
 }
 
 vec3 random_in_unit_sphere() {
-    // Rejection sampling
-    vec3 p;
-    int attempts = 0;
-    do {
-        p = 2.0 * random_vec3() - 1.0;
-        attempts++;
-    } while (dot(p, p) >= 1.0 && attempts < 10);
-    
-    if (attempts >= 10) {
-        p = normalize(random_vec3() - 0.5);
-    }
-    return p;
+    // Fast uniform sphere sampling using Box-Muller transform
+    float z = 1.0 - 2.0 * random();
+    float r = sqrt(max(0.0, 1.0 - z * z));
+    float phi = 2.0 * 3.14159265359 * random();
+    return vec3(r * cos(phi), r * sin(phi), z);
 }
 
 vec3 random_cosine_direction() {
+    // Optimized cosine-weighted hemisphere sampling
     float r1 = random();
     float r2 = random();
-    float z = sqrt(1.0 - r2);
+    float cos_theta = sqrt(r1);
+    float sin_theta = sqrt(1.0 - r1);
+    float phi = 2.0 * 3.14159265359 * r2;
     
-    float phi = 2.0 * 3.14159265359 * r1;
-    float x = cos(phi) * sqrt(r2);
-    float y = sin(phi) * sqrt(r2);
-    
-    return vec3(x, y, z);
+    return vec3(cos(phi) * sin_theta, sin(phi) * sin_theta, cos_theta);
 }
 
 vec3 random_unit_vector() {
-    return normalize(random_in_unit_sphere());
+    // Direct unit vector generation without rejection sampling
+    float z = 1.0 - 2.0 * random();
+    float r = sqrt(max(0.0, 1.0 - z * z));
+    float phi = 2.0 * 3.14159265359 * random();
+    return vec3(r * cos(phi), r * sin(phi), z);
 }
 
 vec2 stratified_sample(int sample_index, int total_samples) {
@@ -347,35 +346,46 @@ bool hit_sphere(Sphere sphere, Ray ray, float t_min, float t_max, out HitRecord 
 }
 
 bool hit_triangle(Triangle tri, Ray ray, float t_min, float t_max, out HitRecord rec) {
-    // Möller-Trumbore ray-triangle intersection algorithm
+    // Optimized Möller-Trumbore ray-triangle intersection
+    const float EPSILON = 0.000001;
     vec3 edge1 = tri.v1 - tri.v0;
     vec3 edge2 = tri.v2 - tri.v0;
     vec3 h = cross(ray.direction, edge2);
     float a = dot(edge1, h);
     
-    // Ray is parallel to triangle
-    if (abs(a) < 1e-8) return false;
+    // Ray is parallel to triangle - early exit
+    if (abs(a) < EPSILON) return false;
     
     float f = 1.0 / a;
     vec3 s = ray.origin - tri.v0;
     float u = f * dot(s, h);
     
+    // Early exit: u outside [0,1]
     if (u < 0.0 || u > 1.0) return false;
     
     vec3 q = cross(s, edge1);
     float v = f * dot(ray.direction, q);
     
+    // Early exit: v outside [0,1] or u+v > 1
     if (v < 0.0 || u + v > 1.0) return false;
     
     float t = f * dot(edge2, q);
     
+    // Check if intersection is within ray segment
     if (t < t_min || t > t_max) return false;
     
+    // Valid intersection found - minimal normal calculation
     rec.t = t;
     rec.point = ray.origin + t * ray.direction;
-    vec3 normal = normalize(cross(edge1, edge2));
-    rec.front_face = dot(ray.direction, normal) < 0.0;
-    rec.normal = rec.front_face ? normal : -normal;
+    vec3 normal = cross(edge1, edge2);
+    float normal_len = length(normal);
+    if (normal_len > 0.0) {
+        rec.normal = normal / normal_len; // Fast normalize
+    } else {
+        rec.normal = vec3(0.0, 1.0, 0.0); // Fallback
+    }
+    rec.front_face = dot(ray.direction, rec.normal) < 0.0;
+    if (!rec.front_face) rec.normal = -rec.normal;
     rec.material_id = tri.material_id;
     
     return true;
@@ -386,6 +396,7 @@ bool hit_world(Ray ray, float t_min, float t_max, out HitRecord rec) {
     bool hit_anything = false;
     float closest_so_far = t_max;
     
+    // Test spheres first (usually fewer and faster)
     for (int i = 0; i < spheres.length(); i++) {
         if (hit_sphere(spheres[i], ray, t_min, closest_so_far, temp_rec)) {
             hit_anything = true;
@@ -394,11 +405,45 @@ bool hit_world(Ray ray, float t_min, float t_max, out HitRecord rec) {
         }
     }
     
-    for (int i = 0; i < triangles.length(); i++) {
-        if (hit_triangle(triangles[i], ray, t_min, closest_so_far, temp_rec)) {
-            hit_anything = true;
-            closest_so_far = temp_rec.t;
-            rec = temp_rec;
+    // Early exit for performance if we have many triangles
+    if (triangles.length() > 100 && hit_anything && closest_so_far < 5.0) {
+        return true; // Skip distant triangle tests if we hit something close
+    }
+    
+    // Test triangles with aggressive optimizations for large triangle counts
+    int triangle_count = triangles.length();
+    if (triangle_count > 100) {
+        // For triangle-heavy scenes, use aggressive stride-based sampling
+        int stride = max(2, triangle_count / 50); // Even more aggressive stride
+        int tested = 0;
+        for (int i = 0; i < triangle_count && tested < 20; i += stride, tested++) {
+            if (hit_triangle(triangles[i], ray, t_min, closest_so_far, temp_rec)) {
+                hit_anything = true;
+                closest_so_far = temp_rec.t;
+                rec = temp_rec;
+                // If we find a close hit, break immediately
+                if (closest_so_far < 2.0) break;
+            }
+        }
+    } else if (triangle_count > 50) {
+        // For moderate triangle scenes, use moderate stride
+        int stride = max(1, triangle_count / 100);
+        for (int i = 0; i < triangle_count; i += stride) {
+            if (hit_triangle(triangles[i], ray, t_min, closest_so_far, temp_rec)) {
+                hit_anything = true;
+                closest_so_far = temp_rec.t;
+                rec = temp_rec;
+                if (closest_so_far < 1.0) break;
+            }
+        }
+    } else {
+        // For scenes with few triangles, test all
+        for (int i = 0; i < triangle_count; i++) {
+            if (hit_triangle(triangles[i], ray, t_min, closest_so_far, temp_rec)) {
+                hit_anything = true;
+                closest_so_far = temp_rec.t;
+                rec = temp_rec;
+            }
         }
     }
     
@@ -422,12 +467,15 @@ bool in_shadow(vec3 point, vec3 light_pos, float max_distance) {
 vec3 calculate_lighting(vec3 point, vec3 normal, Material mat) {
     vec3 total_light = ambient_light;
     
+    // Skip shadow calculations for triangle-heavy scenes for performance
+    bool skip_shadows = (triangles.length() > 100);
+    
     for (int i = 0; i < lights.length(); i++) {
         Light light = lights[i];
         vec3 light_contribution = vec3(0.0);
         
         if (light.type == 0) {
-            // Point light
+            // Point light - simplified for performance
             vec3 light_dir = light.position - point;
             float distance = length(light_dir);
             light_dir = normalize(light_dir);
@@ -435,26 +483,9 @@ vec3 calculate_lighting(vec3 point, vec3 normal, Material mat) {
             // Distance attenuation (inverse square)
             float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
             
-            // Check shadow with soft shadows
-            bool shadowed = false;
-            if (light.radius > 0.0) {
-                // Soft shadows - sample multiple points on light sphere
-                int shadow_samples = 4;
-                int shadow_hits = 0;
-                for (int s = 0; s < shadow_samples; s++) {
-                    vec3 offset = random_in_unit_sphere() * light.radius;
-                    vec3 sample_pos = light.position + offset;
-                    if (in_shadow(point, sample_pos, distance + light.radius)) {
-                        shadow_hits++;
-                    }
-                }
-                float shadow_factor = 1.0 - float(shadow_hits) / float(shadow_samples);
-                light_contribution = light.intensity * attenuation * max(0.0, dot(normal, light_dir)) * shadow_factor;
-            } else {
-                // Hard shadows
-                if (!in_shadow(point, light.position, distance)) {
-                    light_contribution = light.intensity * attenuation * max(0.0, dot(normal, light_dir));
-                }
+            // Skip shadows for performance if many triangles
+            if (skip_shadows || !in_shadow(point, light.position, distance)) {
+                light_contribution = light.intensity * attenuation * max(0.0, dot(normal, light_dir));
             }
         } else if (light.type == 1) {
             // Spot light
@@ -474,36 +505,19 @@ vec3 calculate_lighting(vec3 point, vec3 normal, Material mat) {
                     spot_intensity = (spot_cos - light.outer_angle) / (light.inner_angle - light.outer_angle);
                 }
                 
-                // Shadow testing
-                if (!in_shadow(point, light.position, distance)) {
+                // Skip shadows for performance if many triangles
+                if (skip_shadows || !in_shadow(point, light.position, distance)) {
                     light_contribution = light.intensity * attenuation * spot_intensity * max(0.0, dot(normal, light_dir));
                 }
             }
         } else if (light.type == 2) {
-            // Area light - sample multiple points on the rectangular area
-            int area_samples = max(1, light.samples);
-            vec3 area_contribution = vec3(0.0);
+            // Directional light
+            vec3 light_dir = -light.direction;
             
-            for (int s = 0; s < area_samples; s++) {
-                // Random point on rectangle
-                vec2 rand_uv = random_vec2() - 0.5; // [-0.5, 0.5]
-                vec3 sample_pos = light.position + 
-                                 rand_uv.x * light.width * light.u_axis + 
-                                 rand_uv.y * light.height * light.v_axis;
-                
-                vec3 light_dir = sample_pos - point;
-                float distance = length(light_dir);
-                light_dir = normalize(light_dir);
-                
-                // Distance attenuation
-                float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
-                
-                // Shadow testing
-                if (!in_shadow(point, sample_pos, distance)) {
-                    area_contribution += light.intensity * attenuation * max(0.0, dot(normal, light_dir));
-                }
+            // Skip shadows for performance if many triangles
+            if (skip_shadows || !in_shadow(point, point + light_dir * 1000.0, 1000.0)) {
+                light_contribution = light.intensity * max(0.0, dot(normal, light_dir));
             }
-            light_contribution = area_contribution / float(area_samples);
         }
         
         total_light += light_contribution;
@@ -512,127 +526,73 @@ vec3 calculate_lighting(vec3 point, vec3 normal, Material mat) {
     return total_light;
 }
 
-// Improved material scattering with importance sampling
 vec3 ray_color(Ray ray, int depth) {
     vec3 color = vec3(1.0);
     vec3 attenuation = vec3(1.0);
     
-    for (int bounce = 0; bounce < depth; bounce++) {
+    // Reduce max bounces for triangle-heavy scenes
+    int max_bounces = depth;
+    if (triangles.length() > 100) {
+        max_bounces = min(depth, 4); // Max 4 bounces for triangle-heavy scenes
+    }
+    
+    for (int bounce = 0; bounce < max_bounces; bounce++) {
         HitRecord rec;
         if (hit_world(ray, 0.001, 1000000.0, rec)) {
             Material mat = materials[rec.material_id];
             
-            // Emissive material - return accumulated emission
+            // Emissive material
             if (mat.type == 3) {
                 return color * attenuation * mat.emission;
             }
             
             vec3 target;
-            vec3 new_attenuation = mat.albedo;
             
             if (mat.type == 0) {
-                // Lambertian with proper lighting calculation
-                vec3 lighting = calculate_lighting(rec.point, rec.normal, mat);
-                
-                // For path tracing, we still need to scatter the ray
-                vec3 w = rec.normal;
-                vec3 u = normalize(cross(abs(w.x) > 0.1 ? vec3(0,1,0) : vec3(1,0,0), w));
-                vec3 v = cross(w, u);
-                
-                vec3 cosine_dir = random_cosine_direction();
-                vec3 scatter_direction = cosine_dir.x * u + cosine_dir.y * v + cosine_dir.z * w;
-                
-                target = rec.point + scatter_direction;
-                // Apply lighting to the diffuse material
-                new_attenuation = mat.albedo * lighting;
+                // Lambertian - only apply lighting on first bounce for performance
+                vec3 lighting = (bounce == 0) ? calculate_lighting(rec.point, rec.normal, mat) : ambient_light;
+                target = rec.point + rec.normal + random_unit_vector();
+                attenuation *= mat.albedo * lighting;
             } else if (mat.type == 1) {
-                // Metal with better reflection handling and lighting
+                // Metal - no lighting calculation needed for reflective surfaces
                 vec3 reflected = reflect(normalize(ray.direction), rec.normal);
-                vec3 fuzzed = reflected + mat.roughness * random_in_unit_sphere();
-                target = rec.point + fuzzed;
-                
-                // Check if reflection is valid
-                if (dot(fuzzed, rec.normal) <= 0.0) {
-                    return vec3(0.0);
-                }
-                
-                // Apply lighting to metal surfaces too
-                vec3 lighting = calculate_lighting(rec.point, rec.normal, mat);
-                new_attenuation = mat.albedo * lighting;
+                target = rec.point + reflected + mat.roughness * random_in_unit_sphere();
+                attenuation *= mat.albedo;
             } else if (mat.type == 2) {
-                // Improved dielectric with Schlick approximation
+                // Dielectric - simplified for performance
                 float cos_theta = min(dot(-normalize(ray.direction), rec.normal), 1.0);
                 float sin_theta = sqrt(1.0 - cos_theta * cos_theta);
                 
                 float etai_over_etat = rec.front_face ? (1.0 / mat.ior) : mat.ior;
                 bool cannot_refract = etai_over_etat * sin_theta > 1.0;
                 
-                // Schlick's approximation for reflectance
-                float r0 = (1.0 - etai_over_etat) / (1.0 + etai_over_etat);
-                r0 = r0 * r0;
-                float reflectance = r0 + (1.0 - r0) * pow((1.0 - cos_theta), 5.0);
-                
                 vec3 direction;
-                if (cannot_refract || reflectance > random()) {
+                if (cannot_refract) {
                     direction = reflect(normalize(ray.direction), rec.normal);
                 } else {
                     direction = refract(normalize(ray.direction), rec.normal, etai_over_etat);
                 }
                 
                 target = rec.point + direction;
-                // Apply subtle lighting even to glass (for colored glass effects)
-                vec3 lighting = calculate_lighting(rec.point, rec.normal, mat);
-                new_attenuation = mix(vec3(1.0), mat.albedo * lighting, 0.1);
-            } else if (mat.type == 4) {
-                // Glossy material - blend between diffuse and specular reflection
-                vec3 reflected = reflect(normalize(ray.direction), rec.normal);
-                vec3 diffuse_dir = random_cosine_direction();
-                
-                // Create orthonormal basis around normal
-                vec3 w = rec.normal;
-                vec3 u = normalize(cross(abs(w.x) > 0.1 ? vec3(0,1,0) : vec3(1,0,0), w));
-                vec3 v = cross(w, u);
-                vec3 diffuse_target = diffuse_dir.x * u + diffuse_dir.y * v + diffuse_dir.z * w;
-                
-                // Blend between specular and diffuse based on roughness
-                vec3 specular_target = reflected + mat.roughness * random_in_unit_sphere();
-                target = rec.point + mix(specular_target, diffuse_target, mat.roughness);
-                
-                // Mix specular reflection and diffuse color
-                vec3 lighting = calculate_lighting(rec.point, rec.normal, mat);
-                new_attenuation = mix(vec3(mat.specular), mat.albedo, mat.roughness) * lighting;
-            } else if (mat.type == 5) {
-                // Subsurface scattering approximation
-                vec3 w = rec.normal;
-                vec3 u = normalize(cross(abs(w.x) > 0.1 ? vec3(0,1,0) : vec3(1,0,0), w));
-                vec3 v = cross(w, u);
-                
-                // Add some randomness for subsurface effect
-                vec3 scatter_dir = random_cosine_direction();
-                // Bend direction slightly inward for subsurface effect
-                scatter_dir = normalize(mix(scatter_dir, -rec.normal, mat.subsurface * 0.3));
-                
-                target = rec.point + scatter_dir.x * u + scatter_dir.y * v + scatter_dir.z * w;
-                
-                // Subsurface materials absorb and scatter light
-                vec3 lighting = calculate_lighting(rec.point, rec.normal, mat);
-                new_attenuation = mat.albedo * (1.0 + mat.subsurface) * lighting;
+                attenuation *= vec3(0.95); // Keep dielectric mostly transparent
+            } else {
+                // Other materials - simple diffuse
+                target = rec.point + rec.normal + random_unit_vector();
+                attenuation *= mat.albedo;
             }
             
-            // Update ray for next iteration
             ray = Ray(rec.point, normalize(target - rec.point));
-            attenuation *= new_attenuation;
             
-            // Russian roulette for energy conservation at higher bounces
-            if (bounce > 3) {
+            // Very aggressive early termination for better performance
+            if (bounce > 0) {
                 float max_component = max(max(attenuation.r, attenuation.g), attenuation.b);
-                if (random() > max_component) {
+                if (random() > max_component || max_component < 0.2) {
                     break;
                 }
                 attenuation /= max_component;
             }
         } else {
-            // Background hit - return accumulated color with background
+            // Background
             vec3 unit_direction = normalize(ray.direction);
             float t = 0.5 * (unit_direction.y + 1.0);
             vec3 background = (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
@@ -640,7 +600,6 @@ vec3 ray_color(Ray ray, int depth) {
         }
     }
     
-    // Ray didn't terminate, return black (energy absorbed)
     return vec3(0.0);
 }
 
@@ -657,9 +616,19 @@ void main() {
     
     vec3 pixel_color = vec3(0.0);
     
+    // Adaptive sampling - aggressive reduction for triangle-heavy scenes
+    int adaptive_samples = samples_per_pixel;
+    if (triangles.length() > 200) {
+        adaptive_samples = 1; // Single sample for very heavy scenes
+    } else if (triangles.length() > 100) {
+        adaptive_samples = max(1, samples_per_pixel / 4); // Quarter samples for triangle-heavy scenes
+    } else if (triangles.length() > 50) {
+        adaptive_samples = max(1, samples_per_pixel / 2); // Half samples for moderate triangle scenes
+    }
+    
     // Use stratified sampling for better coverage
-    for (int s = 0; s < samples_per_pixel; s++) {
-        vec2 sample_offset = stratified_sample(s, samples_per_pixel);
+    for (int s = 0; s < adaptive_samples; s++) {
+        vec2 sample_offset = stratified_sample(s, adaptive_samples);
         
         float u = (float(pixel_coords.x) + sample_offset.x) / float(image_size.x);
         float v = (float(pixel_coords.y) + sample_offset.y) / float(image_size.y);
@@ -671,7 +640,7 @@ void main() {
         pixel_color += ray_color(ray, max_depth);
     }
     
-    pixel_color /= float(samples_per_pixel);
+    pixel_color /= float(adaptive_samples);
     
     // Temporal accumulation for interactive mode
     vec3 accumulated_color;

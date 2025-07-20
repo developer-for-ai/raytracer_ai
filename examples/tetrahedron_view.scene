@@ -8,5 +8,6 @@ background 0.5 0.7 1.0
 # Lighting - point light above and to the side
 point_light 4.0 4.0 4.0 1.0 1.0 1.0 0.5
 
-# Load the tetrahedron.obj file
-# This should now work with triangle support!
+# Load the tetrahedron.obj file with proper material
+material tetrahedron_mat lambertian 0.7 0.5 0.3
+load_obj examples/tetrahedron.obj tetrahedron_mat

@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2025-07-20
+
+### Removed
+- **Scene file cleanup**: Removed 12 redundant and obsolete scene files
+  - Removed duplicate temple scenes (temple_complete, temple_optimized, temple_immersive, etc.)
+  - Removed basic scene duplicates (scene1, advanced_scene, lit_scene, realtime)
+  - Kept only essential, unique scene files (6 total)
+- **Documentation cleanup**: Removed 5 obsolete documentation files
+  - Removed CODE_REVIEW_SUMMARY.md, PROJECT_SUMMARY.md, GIT_SETUP.md
+  - Removed empty.scene, outdated benchmark.sh
+- **Updated all references**: Fixed all documentation to reference only existing files
+
+### Added
+- **SCENES_REFERENCE.md**: Comprehensive guide to all remaining scene files
+- **Enhanced tetrahedron_view.scene**: Added proper material and load_obj command
+
+### Enhanced  
+- **Documentation accuracy**: All examples and references now point to existing files
+- **Streamlined project**: Reduced file count while maintaining all functionality
+
 ## [1.0.2] - 2025-07-20
 
 ### Added

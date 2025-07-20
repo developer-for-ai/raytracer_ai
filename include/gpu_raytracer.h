@@ -36,13 +36,16 @@ struct alignas(16) GPUSphere {
 };
 
 struct alignas(16) GPUTriangle {
-    Vec3 v0, v1, v2;     // Triangle vertices
-    int material_id;
-    float _padding[3];   // Explicit padding for alignment
+    Vec3 v0;             // First vertex
+    int material_id;     // Material ID
+    Vec3 v1;             // Second vertex  
+    float _pad1;         // Padding
+    Vec3 v2;             // Third vertex
+    float _pad2;         // Padding
     
     GPUTriangle() = default;
     GPUTriangle(const Vec3& a, const Vec3& b, const Vec3& c, int mat_id) noexcept
-        : v0(a), v1(b), v2(c), material_id(mat_id), _padding{0, 0, 0} {}
+        : v0(a), material_id(mat_id), v1(b), _pad1(0), v2(c), _pad2(0) {}
 };
 
 struct alignas(16) GPUCamera {
