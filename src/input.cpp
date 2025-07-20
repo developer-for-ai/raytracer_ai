@@ -24,7 +24,7 @@
 
 InputHandler::InputHandler(Camera* cam, Window* win) 
     : camera(cam), window(win), first_mouse(true), mouse_initialized(false),
-      movement_speed(2.5f), vertical_speed_multiplier(4.0f), mouse_sensitivity(0.1f), yaw(-90.0f), pitch(0.0f) {
+      movement_speed(2.5f), vertical_speed_multiplier(8.0f), mouse_sensitivity(0.1f), yaw(-90.0f), pitch(0.0f) {
     std::memset(keys_pressed, false, sizeof(keys_pressed));
     last_mouse_x = 0.0;
     last_mouse_y = 0.0;
@@ -146,7 +146,7 @@ void InputHandler::update(float delta_time) {
     
     // Arrow key camera look controls
     bool camera_rotated = false;
-    float arrow_sensitivity = mouse_sensitivity * 15.0f; // Reduced from 50x to 15x for better control
+    float arrow_sensitivity = mouse_sensitivity * 10.0f; // Reduced from 15x to 10x for more precise control
     
     if (keys_pressed[GLFW_KEY_UP]) {
         pitch += arrow_sensitivity;

@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
         std::cout << "  WASD - Move camera\n";
         std::cout << "  Click - Capture/release mouse for looking\n";
         std::cout << "  Arrow Keys - Look around (alternative to mouse)\n";
-        std::cout << "  Space/Shift - Move up/down (4x speed)\n";
+        std::cout << "  Space/Shift - Move up/down (8x speed)\n";
         std::cout << "  R - Reset camera position\n";
         std::cout << "  F1 - Toggle detailed stats\n";
         std::cout << "  ESC - Exit\n";
@@ -204,7 +204,7 @@ int main(int argc, char* argv[]) {
         std::cout << "  WASD - Move camera" << std::endl;
         std::cout << "  Click - Capture/release mouse for looking" << std::endl;
         std::cout << "  Arrow Keys - Look around (alternative to mouse)" << std::endl;
-        std::cout << "  Space/Shift - Move up/down (4x speed)" << std::endl;
+        std::cout << "  Space/Shift - Move up/down (8x speed)" << std::endl;
         std::cout << "  R - Reset camera position" << std::endl;
         std::cout << "  F1 - Toggle detailed stats" << std::endl;
         std::cout << "  ESC - Exit" << std::endl;

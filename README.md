@@ -107,8 +107,8 @@ When running the GPU version:
 - **Left Click** - Toggle mouse capture for camera look (click to capture, click again to release)
 - **Mouse** - Look around when captured (first-person camera)
 - **Arrow Keys** - Look around (alternative to mouse, works even without mouse capture)
-- **Space** - Move up (4x faster than horizontal movement)
-- **Shift** - Move down (4x faster than horizontal movement)
+- **Space** - Move up (8x faster than horizontal movement)
+- **Shift** - Move down (8x faster than horizontal movement)
 - **R** - Reset camera to initial position and orientation
 - **F1** - Toggle detailed performance stats in window title
 - **ESC** - Exit
