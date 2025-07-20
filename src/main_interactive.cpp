@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
         std::cout << "  -h, --height <int>       Window height (default: 800)\n";
         std::cout << "  -s, --samples <int>      Samples per frame (default: 1)\n";
         std::cout << "  -d, --depth <int>        Maximum ray depth (default: 8)\n";
-        std::cout << "  -o, --output <filename>  Save screenshot on startup\n";
+        std::cout << "  -o, --output <filename>  Save rendered frame to file (headless mode)\n";
         std::cout << "Controls:\n";
         std::cout << "  WASD - Move camera\n";
         std::cout << "  Click - Capture/release mouse for looking\n";
