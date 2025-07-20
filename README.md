@@ -9,7 +9,15 @@ A complete, production-ready **interactive GPU ray tracing system** with real-ti
 │   ├── temple_sacred.scene  # Atmospheric temple scene
 │   ├── simple_temple_view.scene # Simple OBJ loading demo
 │   ├── temple.obj           # Indian temple architecture
-│   └── temple_simple.obj    # Simplified temple modelnd solid structure
+│   └── temple_simple.obj    # Simplified temple model
+├── docs/                # Technical documentation
+│   ├── parser.md            # Scene file and OBJ parsing system
+│   ├── gpu_architecture.md  # OpenGL compute shader implementation
+│   ├── materials.md         # Advanced material system guide
+│   ├── lighting.md          # Complete lighting system
+│   ├── scene_format.md      # Scene file format specification
+│   ├── build_system.md      # Build and compilation guide
+│   └── intersections.md     # Ray-geometry intersection algorithmsnd solid structure
 - ⚡ **Performance optimized** for real-time exploration at 15+ FPS with triangle mesheslete Architectural Showcase
 ```bash
 ./build/bin/RayTracerGPU examples/temple_scene.scene
@@ -335,7 +343,19 @@ raytracer_ai/
 - **Display**: 1920x1080 or higher for full interactive experience
 - **Drivers**: Latest GPU drivers for optimal compute shader performance
 
-## 🌟 Key Innovations
+## 📚 **Technical Documentation**
+
+For developers and advanced users, comprehensive technical documentation is available in the [`docs/`](docs/) directory:
+
+- **[Parser System](docs/parser.md)** - Scene file and OBJ parsing architecture  
+- **[GPU Architecture](docs/gpu_architecture.md)** - OpenGL compute shader implementation
+- **[Material System](docs/materials.md)** - Advanced material types and rendering
+- **[Lighting System](docs/lighting.md)** - Complete lighting pipeline
+- **[Scene Format](docs/scene_format.md)** - Scene file format specification
+- **[Build System](docs/build_system.md)** - CMake configuration and compilation
+- **[Intersection Algorithms](docs/intersections.md)** - Ray-geometry intersection methods
+
+## 🎯 Key Innovations
 
 ### **Real-Time GPU Ray Tracing**
 - **Interactive ray tracing** on consumer hardware at playable frame rates

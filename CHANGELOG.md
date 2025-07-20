@@ -39,6 +39,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OptiX backend for NVIDIA RTX acceleration
 - Web-based interface for cloud rendering
 
+## [1.1.1] - 2025-07-20
+
+### Added
+- **Comprehensive Technical Documentation**: Created new `docs/` directory with detailed guides
+  - **Parser System Guide** - Complete scene file and OBJ parsing documentation
+  - **GPU Architecture Guide** - OpenGL compute shader implementation details
+  - **Material System Guide** - Advanced material types with examples and implementation
+  - **Lighting System Guide** - Complete lighting pipeline with soft shadows and multiple light types
+  - **Scene Format Specification** - Complete reference for scene file syntax and commands
+  - **Build System Guide** - CMake configuration, dependencies, and cross-platform building
+  - **Intersection Algorithms Guide** - Mathematical foundations and GPU implementations
+- **Enhanced Documentation Structure**: Clear organization for developers and advanced users
+- **Updated Main README**: Added links to technical documentation directory
+
+### Enhanced
+- **Developer Experience**: Comprehensive guides for extending and modifying the raytracer
+- **Code Documentation**: Detailed implementation examples with working code snippets
+- **Educational Value**: Mathematical foundations and algorithmic explanations
+
 ## [1.1.0] - 2025-07-20
 
 ### Added

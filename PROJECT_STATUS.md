@@ -47,13 +47,13 @@ This GPU ray tracer project has reached **production maturity** with a comprehen
 
 #### **Essential Files Only**
 - **7 scene files** (was 18) - removed all duplicates and obsolete versions
-- **7 documentation files** (was 16) - streamlined for end users
+- **15 documentation files** (8 main + 7 in docs/) - comprehensive and well-organized
 - **2 OBJ models** - temple architecture and testing
 - **Production-ready build system** with automated testing
 
 #### **Current File Inventory**
 ```
-📁 Documentation (7 files)
+📁 Documentation (8 files + docs/ directory)
 ├── README.md - Comprehensive project documentation  
 ├── CHANGELOG.md - Version history and release notes
 ├── CONTRIBUTING.md - Development guidelines
@@ -61,7 +61,16 @@ This GPU ray tracer project has reached **production maturity** with a comprehen
 ├── TEMPLE_GUIDE.md - Temple exploration guide
 ├── IMPLEMENTATION.md - Technical implementation details
 ├── PROJECT_STATUS.md - Current project status and summary
-└── LICENSE - MIT license
+├── LICENSE - MIT license
+└── docs/ - Technical documentation directory
+    ├── README.md - Documentation index and navigation
+    ├── parser.md - Scene file and OBJ parsing system
+    ├── gpu_architecture.md - OpenGL compute shader implementation
+    ├── materials.md - Advanced material system guide
+    ├── lighting.md - Complete lighting system documentation
+    ├── scene_format.md - Scene file format specification
+    ├── build_system.md - Build and compilation guide
+    └── intersections.md - Ray-geometry intersection algorithms
 
 📁 Scene Files (7 files)  
 ├── cornell_box.scene - Classic reference scene
@@ -81,6 +90,13 @@ This GPU ray tracer project has reached **production maturity** with a comprehen
 ├── build.sh - Automated build and test script  
 └── git-workflow.sh - Development helper script
 ```
+
+#### **Enhanced Technical Documentation**
+- **8 comprehensive documentation files** covering all aspects of the raytracer
+- **Developer-focused guides** for extending and modifying the system
+- **Implementation details** with working code examples and mathematical foundations
+- **Cross-referenced navigation** between related documentation topics
+- **Educational content** suitable for learning advanced computer graphics techniques
 
 ### 🚀 **Performance Achievements**
 
