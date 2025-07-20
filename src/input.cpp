@@ -9,6 +9,7 @@
 #define GLFW_KEY_A 65  
 #define GLFW_KEY_S 83
 #define GLFW_KEY_D 68
+#define GLFW_KEY_R 82
 #define GLFW_KEY_SPACE 32
 #define GLFW_KEY_LEFT_SHIFT 340
 #define GLFW_KEY_ESCAPE 256
@@ -18,16 +19,29 @@
 #endif
 
 InputHandler::InputHandler(Camera* cam, Window* win) 
-    : camera(cam), window(win), first_mouse(true), movement_speed(2.5f), mouse_sensitivity(0.1f) {
+    : camera(cam), window(win), first_mouse(true), mouse_initialized(false),
+      movement_speed(2.5f), mouse_sensitivity(0.1f), yaw(-90.0f), pitch(0.0f) {
     std::memset(keys_pressed, false, sizeof(keys_pressed));
     last_mouse_x = 0.0;
     last_mouse_y = 0.0;
+    
+    // Store initial camera state for reset functionality
+    if (camera) {
+        initial_position = camera->position;
+        initial_target = camera->target;
+        initial_up = camera->up;
+    }
 }
 
 void InputHandler::process_keyboard(int key, int action) {
     if (key >= 0 && key < 1024) {
         if (action == GLFW_PRESS) {
             keys_pressed[key] = true;
+            
+            // Handle special keys that need immediate action on press
+            if (key == GLFW_KEY_R) {
+                reset_camera();
+            }
         } else if (action == GLFW_RELEASE) {
             keys_pressed[key] = false;
         }
@@ -46,6 +60,9 @@ void InputHandler::process_mouse(double x_pos, double y_pos) {
         last_mouse_x = x_pos;
         last_mouse_y = y_pos;
         first_mouse = false;
+        
+        // Initialize yaw and pitch from current camera orientation on first mouse capture
+        initialize_from_camera();
     }
     
     double x_offset = x_pos - last_mouse_x;
@@ -56,10 +73,7 @@ void InputHandler::process_mouse(double x_pos, double y_pos) {
     x_offset *= mouse_sensitivity;
     y_offset *= mouse_sensitivity;
     
-    // Update camera orientation
-    static float yaw = -90.0f;  // Start looking down negative Z axis
-    static float pitch = 0.0f;
-    
+    // Update camera orientation using member variables
     yaw += x_offset;
     pitch += y_offset;
     
@@ -138,4 +152,39 @@ bool InputHandler::is_key_pressed(int key) const {
         return keys_pressed[key];
     }
     return false;
+}
+
+void InputHandler::initialize_from_camera() {
+    if (!camera || mouse_initialized) return;
+    
+    // Calculate yaw and pitch from current camera orientation
+    Vec3 direction = (camera->target - camera->position).normalize();
+    
+    // Calculate yaw (rotation around Y axis)
+    yaw = std::atan2(direction.z, direction.x) * 180.0f / M_PI;
+    
+    // Calculate pitch (rotation around X axis) 
+    pitch = std::asin(-direction.y) * 180.0f / M_PI;
+    
+    mouse_initialized = true;
+}
+
+void InputHandler::reset_camera() {
+    if (!camera) return;
+    
+    // Reset to initial state
+    camera->position = initial_position;
+    camera->target = initial_target;  
+    camera->up = initial_up;
+    camera->update_camera();
+    
+    // Reset mouse state and reinitialize angles from camera
+    mouse_initialized = false;
+    first_mouse = true;
+    initialize_from_camera();
+    
+    // Reset accumulation if we have a window
+    if (window) {
+        window->reset_accumulation();
+    }
 }

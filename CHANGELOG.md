@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-07-20
+
+### Fixed
+- **Camera orientation bug**: Fixed scene disappearing after mouse movement due to incorrect yaw/pitch initialization
+- Mouse look now properly initializes from actual camera orientation instead of hardcoded values
+
+### Added  
+- **Camera reset hotkey**: Press 'R' to reset camera to initial position and orientation
+- Better camera recovery when the scene is lost during navigation
+
 ## [1.0.0] - 2025-07-20
 
 ### Added

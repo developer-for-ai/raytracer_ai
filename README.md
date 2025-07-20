@@ -107,11 +107,14 @@ When running the GPU version:
 - **Left Click** - Toggle mouse capture for camera look (click to capture, click again to release)
 - **Mouse** - Look around when captured (first-person camera)
 - **Space** - Move up
-- **Shift** - Move down  
+- **Shift** - Move down
+- **R** - Reset camera to initial position and orientation
 - **F1** - Toggle detailed performance stats in window title
 - **ESC** - Exit
 
 > 💡 **Tip**: Click anywhere in the window to start looking around. The mouse cursor will be hidden and locked to the window. Click again to release the mouse and return to normal cursor behavior.
+
+> 🔄 **Camera Reset**: If you lose the scene or get disoriented, press **R** to reset the camera to its original position and view angle.
 
 > 📊 **Performance**: The window title shows real-time FPS and frame time. Press F1 to toggle between simple and detailed performance displays.
 
