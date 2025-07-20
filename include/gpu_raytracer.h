@@ -35,6 +35,16 @@ struct alignas(16) GPUSphere {
         : center(c), radius(r), material_id(mat_id), _padding{0, 0, 0} {}
 };
 
+struct alignas(16) GPUTriangle {
+    Vec3 v0, v1, v2;     // Triangle vertices
+    int material_id;
+    float _padding[3];   // Explicit padding for alignment
+    
+    GPUTriangle() = default;
+    GPUTriangle(const Vec3& a, const Vec3& b, const Vec3& c, int mat_id) noexcept
+        : v0(a), v1(b), v2(c), material_id(mat_id), _padding{0, 0, 0} {}
+};
+
 struct alignas(16) GPUCamera {
     Vec3 position;
     float _padding1;
@@ -74,11 +84,12 @@ private:
     GLuint accumulation_texture;  // For temporal accumulation
     GLuint material_buffer;
     GLuint sphere_buffer;
+    GLuint triangle_buffer;       // Triangle buffer
     GLuint camera_buffer;
     GLuint light_buffer;
     
     int window_width, window_height;
-    int num_materials, num_spheres, num_lights;
+    int num_materials, num_spheres, num_triangles, num_lights;
     Vec3 ambient_light;
     int frame_count;              // For temporal accumulation
     bool reset_accumulation;      // Reset flag for camera movement

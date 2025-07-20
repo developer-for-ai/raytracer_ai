@@ -161,6 +161,12 @@ struct Sphere {
     float padding[3];
 };
 
+struct Triangle {
+    vec3 v0, v1, v2;
+    int material_id;
+    float padding[3];
+};
+
 struct GPUCamera {
     vec3 position;
     float padding1;
@@ -208,6 +214,10 @@ layout(std430, binding = 4) buffer CameraBuffer {
 
 layout(std430, binding = 5) buffer LightBuffer {
     Light lights[];
+};
+
+layout(std430, binding = 6) buffer TriangleBuffer {
+    Triangle triangles[];
 };
 
 uniform int max_depth;
@@ -336,6 +346,41 @@ bool hit_sphere(Sphere sphere, Ray ray, float t_min, float t_max, out HitRecord 
     return true;
 }
 
+bool hit_triangle(Triangle tri, Ray ray, float t_min, float t_max, out HitRecord rec) {
+    // Möller-Trumbore ray-triangle intersection algorithm
+    vec3 edge1 = tri.v1 - tri.v0;
+    vec3 edge2 = tri.v2 - tri.v0;
+    vec3 h = cross(ray.direction, edge2);
+    float a = dot(edge1, h);
+    
+    // Ray is parallel to triangle
+    if (abs(a) < 1e-8) return false;
+    
+    float f = 1.0 / a;
+    vec3 s = ray.origin - tri.v0;
+    float u = f * dot(s, h);
+    
+    if (u < 0.0 || u > 1.0) return false;
+    
+    vec3 q = cross(s, edge1);
+    float v = f * dot(ray.direction, q);
+    
+    if (v < 0.0 || u + v > 1.0) return false;
+    
+    float t = f * dot(edge2, q);
+    
+    if (t < t_min || t > t_max) return false;
+    
+    rec.t = t;
+    rec.point = ray.origin + t * ray.direction;
+    vec3 normal = normalize(cross(edge1, edge2));
+    rec.front_face = dot(ray.direction, normal) < 0.0;
+    rec.normal = rec.front_face ? normal : -normal;
+    rec.material_id = tri.material_id;
+    
+    return true;
+}
+
 bool hit_world(Ray ray, float t_min, float t_max, out HitRecord rec) {
     HitRecord temp_rec;
     bool hit_anything = false;
@@ -343,6 +388,14 @@ bool hit_world(Ray ray, float t_min, float t_max, out HitRecord rec) {
     
     for (int i = 0; i < spheres.length(); i++) {
         if (hit_sphere(spheres[i], ray, t_min, closest_so_far, temp_rec)) {
+            hit_anything = true;
+            closest_so_far = temp_rec.t;
+            rec = temp_rec;
+        }
+    }
+    
+    for (int i = 0; i < triangles.length(); i++) {
+        if (hit_triangle(triangles[i], ray, t_min, closest_so_far, temp_rec)) {
             hit_anything = true;
             closest_so_far = temp_rec.t;
             rec = temp_rec;

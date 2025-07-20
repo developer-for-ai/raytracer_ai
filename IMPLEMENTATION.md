@@ -19,11 +19,13 @@ if (glew_init != GLEW_OK) {
 
 ### Core Components
 
-1. **Ray-Sphere Intersection**: Optimized quadratic solver with early termination
-2. **Ray-Triangle Intersection**: Möller–Trumbore algorithm for efficiency  
-3. **BVH Acceleration**: SAH-based bounding volume hierarchy for O(log n) queries
-4. **Multi-threading**: Work-stealing thread pool for optimal CPU utilization
-5. **Material System**: Physically-based BSDF implementations
+1. **GPU Ray Tracing**: OpenGL compute shader pipeline for massive parallelization
+2. **Ray-Sphere Intersection**: Optimized quadratic solver with early termination
+3. **Ray-Triangle Intersection**: Möller-Trumbore algorithm for mesh geometry
+4. **Dual Geometry Support**: Both spheres and triangular meshes in unified pipeline
+5. **OBJ File Loading**: Full 3D mesh import with material assignment
+6. **Advanced Material System**: 6 physically-based material types
+7. **Multi-Light Support**: Point, spot, area, and ambient lighting
 
 ### Performance Optimizations
 
@@ -139,4 +141,87 @@ Quality assurance measures:
 - Memory leak detection (Valgrind)
 - Cross-platform compatibility testing
 
-This implementation prioritizes correctness and performance while maintaining readable, maintainable code suitable for educational purposes and production use.
+## GPU Implementation Details
+
+### Compute Shader Architecture
+The ray tracer uses OpenGL 4.3 compute shaders for parallel ray processing:
+
+```glsl
+#version 430
+layout(local_size_x = 8, local_size_y = 8) in;
+
+// Work group processes 8x8 pixel tiles simultaneously
+// Each invocation handles one ray per pixel
+```
+
+### Memory Layout and Buffers
+```cpp
+// GPU-aligned structures for efficient shader access
+struct alignas(16) GPUSphere {
+    Vec3 center;
+    float radius;
+    int material_id;
+    float _padding[3];
+};
+
+struct alignas(16) GPUTriangle {
+    Vec3 v0, v1, v2;     // Triangle vertices
+    int material_id;
+    float _padding[3];
+};
+```
+
+### Ray-Triangle Intersection (Möller-Trumbore)
+```glsl
+bool hit_triangle(Triangle tri, Ray ray, float t_min, float t_max, out HitRecord rec) {
+    vec3 edge1 = tri.v1 - tri.v0;
+    vec3 edge2 = tri.v2 - tri.v0;
+    vec3 h = cross(ray.direction, edge2);
+    float a = dot(edge1, h);
+    
+    if (abs(a) < 1e-8) return false;  // Ray parallel to triangle
+    
+    float f = 1.0 / a;
+    vec3 s = ray.origin - tri.v0;
+    float u = f * dot(s, h);
+    
+    if (u < 0.0 || u > 1.0) return false;
+    
+    vec3 q = cross(s, edge1);
+    float v = f * dot(ray.direction, q);
+    
+    if (v < 0.0 || u + v > 1.0) return false;
+    
+    float t = f * dot(edge2, q);
+    
+    if (t < t_min || t > t_max) return false;
+    
+    // Valid intersection found
+    rec.t = t;
+    rec.point = ray.origin + t * ray.direction;
+    vec3 normal = normalize(cross(edge1, edge2));
+    rec.front_face = dot(ray.direction, normal) < 0.0;
+    rec.normal = rec.front_face ? normal : -normal;
+    rec.material_id = tri.material_id;
+    
+    return true;
+}
+```
+
+### OBJ File Support
+The parser now handles standard OBJ files with:
+- Vertex definitions (`v x y z`)
+- Face definitions (`f v1 v2 v3`)
+- Triangle fan tessellation for N-gons
+- Automatic material assignment
+- Proper normal calculation
+
+```cpp
+// OBJ parsing creates Triangle objects
+scene.add_object(std::make_shared<Triangle>(
+    vertices[face_indices[0]],
+    vertices[face_indices[i]],
+    vertices[face_indices[i + 1]],
+    material_id
+));
+```

@@ -7,9 +7,9 @@
 #include <cmath>
 
 GPURayTracer::GPURayTracer(int width, int height) 
-    : window_width(width), window_height(height), num_materials(0), num_spheres(0), num_lights(0),
+    : window_width(width), window_height(height), num_materials(0), num_spheres(0), num_triangles(0), num_lights(0),
       compute_shader(0), shader_program(0), output_texture(0), accumulation_texture(0),
-      material_buffer(0), sphere_buffer(0), camera_buffer(0), light_buffer(0),
+      material_buffer(0), sphere_buffer(0), triangle_buffer(0), camera_buffer(0), light_buffer(0),
       ambient_light(0.1f, 0.1f, 0.1f), frame_count(0), reset_accumulation(true) {
 }
 
@@ -18,6 +18,7 @@ GPURayTracer::~GPURayTracer() {
     if (accumulation_texture) glDeleteTextures(1, &accumulation_texture);
     if (material_buffer) glDeleteBuffers(1, &material_buffer);
     if (sphere_buffer) glDeleteBuffers(1, &sphere_buffer);
+    if (triangle_buffer) glDeleteBuffers(1, &triangle_buffer);
     if (camera_buffer) glDeleteBuffers(1, &camera_buffer);
     if (light_buffer) glDeleteBuffers(1, &light_buffer);
     if (shader_program) glDeleteProgram(shader_program);
@@ -57,6 +58,7 @@ bool GPURayTracer::initialize() {
     // Generate buffer objects
     glGenBuffers(1, &material_buffer);
     glGenBuffers(1, &sphere_buffer);
+    glGenBuffers(1, &triangle_buffer);
     glGenBuffers(1, &camera_buffer);
     glGenBuffers(1, &light_buffer);
     
@@ -128,21 +130,39 @@ void GPURayTracer::load_scene(const Scene& scene) {
         gpu_materials.push_back(gpu_mat);
     }
     
-    // Convert spheres to GPU format
+    // Convert spheres and triangles to GPU format
     std::vector<GPUSphere> gpu_spheres;
+    std::vector<GPUTriangle> gpu_triangles;
+    int triangle_count = 0;
+    int sphere_count = 0;
+    
     for (const auto& obj : scene.objects) {
-        // Only handle spheres for now
         if (auto sphere = std::dynamic_pointer_cast<Sphere>(obj)) {
             GPUSphere gpu_sphere;
             gpu_sphere.center = sphere->center;
             gpu_sphere.radius = sphere->radius;
             gpu_sphere.material_id = sphere->material_id;
             gpu_spheres.push_back(gpu_sphere);
+            sphere_count++;
+        } else if (auto triangle = std::dynamic_pointer_cast<Triangle>(obj)) {
+            GPUTriangle gpu_triangle;
+            gpu_triangle.v0 = triangle->v0;
+            gpu_triangle.v1 = triangle->v1;
+            gpu_triangle.v2 = triangle->v2;
+            gpu_triangle.material_id = triangle->material_id;
+            gpu_triangles.push_back(gpu_triangle);
+            triangle_count++;
         }
     }
     
+    // Log loading statistics
+    ErrorHandling::Logger::info("Scene loading: " + std::to_string(scene.objects.size()) + " total objects, " +
+                                std::to_string(sphere_count) + " spheres, " + 
+                                std::to_string(triangle_count) + " triangles");
+    
     num_materials = gpu_materials.size();
     num_spheres = gpu_spheres.size();
+    num_triangles = gpu_triangles.size();
     
     // Convert lights to GPU format
     std::vector<GPULight> gpu_lights;
@@ -189,6 +209,12 @@ void GPURayTracer::load_scene(const Scene& scene) {
     glBufferData(GL_SHADER_STORAGE_BUFFER, gpu_spheres.size() * sizeof(GPUSphere), 
                  gpu_spheres.data(), GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sphere_buffer);
+    
+    // Upload triangles
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangle_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, gpu_triangles.size() * sizeof(GPUTriangle), 
+                 gpu_triangles.data(), GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, triangle_buffer);
     
     // Upload lights
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, light_buffer);

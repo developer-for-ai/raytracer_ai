@@ -1,0 +1,24 @@
+# Test scene with tetrahedron and proper camera
+camera 3.0 2.0 3.0 0.0 0.0 0.0 0.0 1.0 0.0 45.0 1.5
+background 0.2 0.3 0.4
+
+# Load the tetrahedron OBJ file (should be supported in future)
+# For now, manually define the tetrahedron geometry:
+
+# Default gray material  
+material default 0.7 0.7 0.7 lambertian
+
+# Add some lighting
+light 5.0 5.0 5.0 1.0 1.0 1.0
+
+# The four triangular faces of the tetrahedron:
+# Face 1: vertices 1, 2, 3 -> (0,1,0), (-0.866,-0.5,-0.5), (0.866,-0.5,-0.5)
+# Face 2: vertices 1, 3, 4 -> (0,1,0), (0.866,-0.5,-0.5), (0,-0.5,1) 
+# Face 3: vertices 1, 4, 2 -> (0,1,0), (0,-0.5,1), (-0.866,-0.5,-0.5)
+# Face 4: vertices 2, 4, 3 -> (-0.866,-0.5,-0.5), (0,-0.5,1), (0.866,-0.5,-0.5)
+
+# Since triangle primitive isn't available, let's use spheres to approximate vertices
+sphere 0.0 1.0 0.0 0.1 default
+sphere -0.866 -0.5 -0.5 0.1 default  
+sphere 0.866 -0.5 -0.5 0.1 default
+sphere 0.0 -0.5 1.0 0.1 default

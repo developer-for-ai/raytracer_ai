@@ -3,6 +3,7 @@ build/
 bin/
 obj/
 out/
+dist/
 
 # Compiled Object files
 *.o
@@ -17,6 +18,90 @@ out/
 *.so
 *.dylib
 *.dll
+
+# Static libraries
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+RayTracerGPU
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cbp
+
+# IDE files
+.vscode/
+.vs/
+*.vcxproj*
+*.sln
+*.suo
+*.user
+*.ncb
+*.aps
+*.pch
+*.vspscc
+*_i.c
+*_p.c
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.rsp
+*.pgc
+*.pgd
+*.meta
+*.tlog
+*.manifest
+*.res
+*.pch
+*.ilk
+*.exp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*~
+.#*
+\#*#
+
+# Output images and test files
+*.ppm
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.tga
+test_*.scene
+temp*.scene
+
+# Backup files
+*.backup
+*.bak
+*.orig
+*.rej
 
 # Fortran module files
 *.mod

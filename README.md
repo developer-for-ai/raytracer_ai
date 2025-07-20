@@ -37,8 +37,15 @@ A complete, production-ready **interactive GPU ray tracing system** with real-ti
 - **Subsurface**: Materials with subsurface scattering for realistic skin, wax, etc.
 
 ### **File Format Support**  
+- **OBJ files**: Full 3D mesh support with triangle rendering
 - **Custom scene format**: Human-readable text files with full material and lighting control
 - **PPM output**: Uncompressed image format for maximum quality and compatibility
+
+### **Geometry Support**
+- **Spheres**: Perfect spherical primitives with ray-sphere intersection
+- **Triangles**: Full triangle mesh support with Möller-Trumbore intersection
+- **OBJ meshes**: Import 3D models from standard OBJ files
+- **Complex geometry**: Tetrahedra, cubes, and any triangulated mesh
 
 ## 💡 **Advanced Lighting System**
 
@@ -169,14 +176,34 @@ When running the GPU raytracer:
 ./build/bin/RayTracerGPU examples/realtime.scene -o preview.ppm -w 800 -h 600 -s 8
 ```
 
+### OBJ File Rendering
+```bash
+# Load and render 3D meshes directly
+./build/bin/RayTracerGPU examples/tetrahedron.obj
+
+# Custom OBJ files with proper camera positioning
+./build/bin/RayTracerGPU your_model.obj -w 1920 -h 1080
+
+# High-quality OBJ rendering
+./build/bin/RayTracerGPU mesh.obj -o model_render.ppm -w 2048 -h 1536 -s 16
+```
+
 ## 🔬 Example Scenes Included
 
+### Scene Files (.scene)
 1. **realtime.scene**: Optimized for interactive GPU rendering with basic lighting
 2. **advanced_scene.scene**: Complex scene with multiple light types and advanced materials
 3. **materials_showcase.scene**: Comprehensive demonstration of all material types
 4. **lighting_demo.scene**: Complete showcase of all lighting features (point, spot, area, ambient)
 5. **cornell_box.scene**: Classic computer graphics test scene
 6. **showcase.scene**: Overall feature demonstration with balanced complexity
+
+### 3D Models (.obj)
+7. **tetrahedron.obj**: Simple 4-triangle tetrahedron for testing triangle rendering
+8. **tetrahedron_view.scene**: Scene file with proper camera positioning for tetrahedron viewing
+
+### Output Examples  
+Generated PPM files from recent renders are included to showcase capabilities.
 
 ## 🛠️ Technical Implementation
 
