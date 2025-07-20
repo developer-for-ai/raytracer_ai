@@ -7,12 +7,14 @@
 
 GPURayTracer::GPURayTracer(int width, int height) 
     : window_width(width), window_height(height), num_materials(0), num_spheres(0),
-      compute_shader(0), shader_program(0), output_texture(0), 
-      material_buffer(0), sphere_buffer(0), camera_buffer(0) {
+      compute_shader(0), shader_program(0), output_texture(0), accumulation_texture(0),
+      material_buffer(0), sphere_buffer(0), camera_buffer(0),
+      frame_count(0), reset_accumulation(true) {
 }
 
 GPURayTracer::~GPURayTracer() {
     if (output_texture) glDeleteTextures(1, &output_texture);
+    if (accumulation_texture) glDeleteTextures(1, &accumulation_texture);
     if (material_buffer) glDeleteBuffers(1, &material_buffer);
     if (sphere_buffer) glDeleteBuffers(1, &sphere_buffer);
     if (camera_buffer) glDeleteBuffers(1, &camera_buffer);
@@ -44,6 +46,14 @@ bool GPURayTracer::initialize() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindImageTexture(0, output_texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    
+    // Create accumulation texture for temporal denoising
+    glGenTextures(1, &accumulation_texture);
+    glBindTexture(GL_TEXTURE_2D, accumulation_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window_width, window_height, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindImageTexture(1, accumulation_texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     
     // Generate buffer objects
     glGenBuffers(1, &material_buffer);
@@ -128,13 +138,16 @@ void GPURayTracer::load_scene(const Scene& scene) {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, material_buffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, gpu_materials.size() * sizeof(GPUMaterial), 
                  gpu_materials.data(), GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, material_buffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, material_buffer);
     
     // Upload spheres
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, sphere_buffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, gpu_spheres.size() * sizeof(GPUSphere), 
                  gpu_spheres.data(), GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, sphere_buffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sphere_buffer);
+    
+    // Reset accumulation when scene changes
+    reset_accumulation_buffer();
 }
 
 void GPURayTracer::update_camera(const Camera& camera) {
@@ -150,7 +163,7 @@ void GPURayTracer::update_camera(const Camera& camera) {
     
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, camera_buffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GPUCamera), &gpu_camera, GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, camera_buffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, camera_buffer);
 }
 
 void GPURayTracer::render(const Camera& camera, int samples, int max_depth) {
@@ -158,11 +171,21 @@ void GPURayTracer::render(const Camera& camera, int samples, int max_depth) {
     
     glUseProgram(shader_program);
     
+    // Increment frame count for temporal accumulation
+    frame_count++;
+    
     // Set uniforms
     glUniform1i(glGetUniformLocation(shader_program, "max_depth"), max_depth);
     glUniform1i(glGetUniformLocation(shader_program, "samples_per_pixel"), samples);
     glUniform1f(glGetUniformLocation(shader_program, "time"), 
                 static_cast<float>(glfwGetTime()));
+    glUniform1i(glGetUniformLocation(shader_program, "frame_count"), frame_count);
+    glUniform1i(glGetUniformLocation(shader_program, "reset_accumulation"), reset_accumulation ? 1 : 0);
+    
+    // Clear reset flag after first use
+    if (reset_accumulation) {
+        reset_accumulation = false;
+    }
     
     // Dispatch compute shader
     glDispatchCompute((window_width + 7) / 8, (window_height + 7) / 8, 1);
@@ -186,4 +209,19 @@ void GPURayTracer::resize(int width, int height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindImageTexture(0, output_texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    
+    // Recreate accumulation texture
+    if (accumulation_texture) {
+        glDeleteTextures(1, &accumulation_texture);
+    }
+    
+    glGenTextures(1, &accumulation_texture);
+    glBindTexture(GL_TEXTURE_2D, accumulation_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindImageTexture(1, accumulation_texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+    
+    // Reset accumulation when resizing
+    reset_accumulation_buffer();
 }

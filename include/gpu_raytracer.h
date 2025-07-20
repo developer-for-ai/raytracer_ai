@@ -40,12 +40,15 @@ private:
     GLuint compute_shader;
     GLuint shader_program;
     GLuint output_texture;
+    GLuint accumulation_texture;  // For temporal accumulation
     GLuint material_buffer;
     GLuint sphere_buffer;
     GLuint camera_buffer;
     
     int window_width, window_height;
     int num_materials, num_spheres;
+    int frame_count;              // For temporal accumulation
+    bool reset_accumulation;      // Reset flag for camera movement
     
     bool compile_shader(const std::string& source, GLuint& shader);
     bool create_compute_program();
@@ -59,6 +62,12 @@ public:
     void load_scene(const Scene& scene);
     void render(const Camera& camera, int samples, int max_depth);
     void resize(int width, int height);
+    
+    // Reset accumulation buffer (call when camera moves)
+    void reset_accumulation_buffer() { 
+        reset_accumulation = true; 
+        frame_count = 0; 
+    }
     
     GLuint get_output_texture() const { return output_texture; }
     

@@ -40,8 +40,8 @@ int main(int argc, char* argv[]) {
     // Parse command line arguments
     int window_width = 1200;
     int window_height = 800;
-    int samples_per_frame = 1;  // Real-time rendering with low samples
-    int max_depth = 8;          // Reduced depth for performance
+    int samples_per_frame = 4;      // Increased from 1 for better quality
+    int max_depth = 10;             // Increased from 8 for better lighting
     std::string output_filename = "";  // Empty means no screenshot capture
     
     for (int i = 2; i < argc; i++) {

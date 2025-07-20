@@ -76,6 +76,11 @@ void InputHandler::process_mouse(double x_pos, double y_pos) {
     // Update camera target
     camera->target = camera->position + front.normalize();
     camera->update_camera();
+    
+    // Reset temporal accumulation when camera rotates
+    if (window) {
+        window->reset_accumulation();
+    }
 }
 
 void InputHandler::update(float delta_time) {
@@ -85,34 +90,47 @@ void InputHandler::update(float delta_time) {
     Vec3 right = front.cross(camera->up).normalize();
     
     float velocity = movement_speed * delta_time;
+    bool camera_moved = false;
     
     // Movement
     if (keys_pressed[GLFW_KEY_W]) {
         camera->position = camera->position + front * velocity;
         camera->target = camera->target + front * velocity;
+        camera_moved = true;
     }
     if (keys_pressed[GLFW_KEY_S]) {
         camera->position = camera->position - front * velocity;
         camera->target = camera->target - front * velocity;
+        camera_moved = true;
     }
     if (keys_pressed[GLFW_KEY_A]) {
         camera->position = camera->position - right * velocity;
         camera->target = camera->target - right * velocity;
+        camera_moved = true;
     }
     if (keys_pressed[GLFW_KEY_D]) {
         camera->position = camera->position + right * velocity;
         camera->target = camera->target + right * velocity;
+        camera_moved = true;
     }
     if (keys_pressed[GLFW_KEY_SPACE]) {
         camera->position.y += velocity;
         camera->target.y += velocity;
+        camera_moved = true;
     }
     if (keys_pressed[GLFW_KEY_LEFT_SHIFT]) {
         camera->position.y -= velocity;
         camera->target.y -= velocity;
+        camera_moved = true;
     }
     
-    camera->update_camera();
+    if (camera_moved) {
+        camera->update_camera();
+        // Reset temporal accumulation when camera moves
+        if (window) {
+            window->reset_accumulation();
+        }
+    }
 }
 
 bool InputHandler::is_key_pressed(int key) const {

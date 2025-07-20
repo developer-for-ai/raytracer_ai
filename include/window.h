@@ -57,6 +57,7 @@ public:
     void update_fps_display(float fps, float frame_time);
     void toggle_detailed_stats() { show_detailed_stats = !show_detailed_stats; }
     void capture_frame(const std::string& filename);  // Capture current frame to file
+    void reset_accumulation() { if (gpu_raytracer) gpu_raytracer->reset_accumulation_buffer(); }  // Reset temporal accumulation
     
     // Callbacks
     void set_key_callback(std::function<void(int, int, int, int)> callback);

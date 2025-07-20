@@ -107,6 +107,7 @@ const char* Shader::get_raytracing_compute_shader() {
 
 layout(local_size_x = 8, local_size_y = 8) in;
 layout(rgba32f, binding = 0) uniform image2D output_image;
+layout(rgba32f, binding = 1) uniform image2D accumulation_buffer;
 
 struct Material {
     vec3 albedo;
@@ -139,52 +140,106 @@ struct GPUCamera {
     float lens_radius;
 };
 
-layout(std430, binding = 1) buffer MaterialBuffer {
+layout(std430, binding = 2) buffer MaterialBuffer {
     Material materials[];
 };
 
-layout(std430, binding = 2) buffer SphereBuffer {
+layout(std430, binding = 3) buffer SphereBuffer {
     Sphere spheres[];
 };
 
-layout(std430, binding = 3) buffer CameraBuffer {
+layout(std430, binding = 4) buffer CameraBuffer {
     GPUCamera camera;
 };
 
 uniform int max_depth;
 uniform int samples_per_pixel;
 uniform float time;
+uniform int frame_count;
+uniform bool reset_accumulation;
 
-uint rng_state = 0u;
+// Improved RNG state - use multiple seeds for better distribution
+uvec4 rng_state;
 
-uint wang_hash(uint seed) {
-    seed = (seed ^ 61u) ^ (seed >> 16u);
-    seed *= 9u;
-    seed = seed ^ (seed >> 4u);
-    seed *= 0x27d4eb2du;
-    seed = seed ^ (seed >> 15u);
-    return seed;
+// Better hash function for improved random distribution
+uint pcg_hash(uint seed) {
+    uint state = seed * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
 }
 
+// Initialize RNG with better seeding
+void init_random(uvec2 pixel, uint frame) {
+    rng_state.x = pcg_hash(pixel.x + 1920u * pixel.y);
+    rng_state.y = pcg_hash(rng_state.x + frame);
+    rng_state.z = pcg_hash(rng_state.y + pixel.x);
+    rng_state.w = pcg_hash(rng_state.z + pixel.y);
+}
+
+// Xorshift128+ RNG for better quality randomness
 float random() {
-    rng_state = wang_hash(rng_state);
-    return float(rng_state) / float(0xFFFFFFFFu);
+    uvec4 t = rng_state;
+    uvec4 s = rng_state;
+    t.x = s.x ^ (s.x << 11u);
+    t.x = t.x ^ (t.x >> 8u);
+    rng_state.x = s.y;
+    rng_state.y = s.z;
+    rng_state.z = s.w;
+    rng_state.w = t.x ^ s.w ^ (s.w >> 19u);
+    return float(rng_state.w) / float(0xFFFFFFFFu);
+}
+
+vec2 random_vec2() {
+    return vec2(random(), random());
 }
 
 vec3 random_vec3() {
     return vec3(random(), random(), random());
 }
 
+// Improved sampling in unit sphere using rejection sampling with early bailout
 vec3 random_in_unit_sphere() {
     vec3 p;
+    int attempts = 0;
     do {
         p = 2.0 * random_vec3() - 1.0;
-    } while (dot(p, p) >= 1.0);
+        attempts++;
+    } while (dot(p, p) >= 1.0 && attempts < 10);
+    
+    // Fallback to normalize if rejection sampling fails
+    if (attempts >= 10) {
+        p = normalize(random_vec3() - 0.5);
+    }
     return p;
+}
+
+// Cosine-weighted hemisphere sampling for better importance sampling
+vec3 random_cosine_direction() {
+    float r1 = random();
+    float r2 = random();
+    float z = sqrt(1.0 - r2);
+    
+    float phi = 2.0 * 3.14159265359 * r1;
+    float x = cos(phi) * sqrt(r2);
+    float y = sin(phi) * sqrt(r2);
+    
+    return vec3(x, y, z);
 }
 
 vec3 random_unit_vector() {
     return normalize(random_in_unit_sphere());
+}
+
+// Blue noise-like stratified sampling for better pixel coverage
+vec2 stratified_sample(int sample_index, int total_samples) {
+    int sqrt_samples = int(sqrt(float(total_samples)));
+    if (sqrt_samples * sqrt_samples < total_samples) sqrt_samples++;
+    
+    int x = sample_index % sqrt_samples;
+    int y = sample_index / sqrt_samples;
+    
+    vec2 jitter = random_vec2();
+    return (vec2(x, y) + jitter) / float(sqrt_samples);
 }
 
 struct Ray {
@@ -244,6 +299,7 @@ bool hit_world(Ray ray, float t_min, float t_max, out HitRecord rec) {
     return hit_anything;
 }
 
+// Improved material scattering with importance sampling
 vec3 ray_color(Ray ray, int depth) {
     vec3 color = vec3(1.0);
     vec3 attenuation = vec3(1.0);
@@ -253,34 +309,72 @@ vec3 ray_color(Ray ray, int depth) {
         if (hit_world(ray, 0.001, 1000000.0, rec)) {
             Material mat = materials[rec.material_id];
             
-            // Emissive material
+            // Emissive material - return accumulated emission
             if (mat.type == 3) {
-                return color * mat.emission;
+                return color * attenuation * mat.emission;
             }
             
             vec3 target;
             vec3 new_attenuation = mat.albedo;
             
             if (mat.type == 0) {
-                // Lambertian
-                target = rec.point + rec.normal + random_unit_vector();
+                // Lambertian with cosine-weighted importance sampling
+                vec3 w = rec.normal;
+                vec3 u = normalize(cross(abs(w.x) > 0.1 ? vec3(0,1,0) : vec3(1,0,0), w));
+                vec3 v = cross(w, u);
+                
+                vec3 cosine_dir = random_cosine_direction();
+                vec3 scatter_direction = cosine_dir.x * u + cosine_dir.y * v + cosine_dir.z * w;
+                
+                target = rec.point + scatter_direction;
+                // Cosine-weighted sampling already accounts for Lambert's law
+                new_attenuation *= mat.albedo;
             } else if (mat.type == 1) {
-                // Metal
+                // Metal with better reflection handling
                 vec3 reflected = reflect(normalize(ray.direction), rec.normal);
-                target = rec.point + reflected + mat.roughness * random_in_unit_sphere();
-                if (dot(target - rec.point, rec.normal) <= 0.0) {
+                vec3 fuzzed = reflected + mat.roughness * random_in_unit_sphere();
+                target = rec.point + fuzzed;
+                
+                // Check if reflection is valid
+                if (dot(fuzzed, rec.normal) <= 0.0) {
                     return vec3(0.0);
                 }
             } else if (mat.type == 2) {
-                // Dielectric (simplified)
-                vec3 refracted = refract(normalize(ray.direction), rec.normal, 1.0 / mat.ior);
-                target = rec.point + refracted;
-                new_attenuation = vec3(1.0);
+                // Improved dielectric with Schlick approximation
+                float cos_theta = min(dot(-normalize(ray.direction), rec.normal), 1.0);
+                float sin_theta = sqrt(1.0 - cos_theta * cos_theta);
+                
+                float etai_over_etat = rec.front_face ? (1.0 / mat.ior) : mat.ior;
+                bool cannot_refract = etai_over_etat * sin_theta > 1.0;
+                
+                // Schlick's approximation for reflectance
+                float r0 = (1.0 - etai_over_etat) / (1.0 + etai_over_etat);
+                r0 = r0 * r0;
+                float reflectance = r0 + (1.0 - r0) * pow((1.0 - cos_theta), 5.0);
+                
+                vec3 direction;
+                if (cannot_refract || reflectance > random()) {
+                    direction = reflect(normalize(ray.direction), rec.normal);
+                } else {
+                    direction = refract(normalize(ray.direction), rec.normal, etai_over_etat);
+                }
+                
+                target = rec.point + direction;
+                new_attenuation = vec3(1.0); // Glass doesn't absorb light
             }
             
             // Update ray for next iteration
             ray = Ray(rec.point, normalize(target - rec.point));
             attenuation *= new_attenuation;
+            
+            // Russian roulette for energy conservation at higher bounces
+            if (bounce > 3) {
+                float max_component = max(max(attenuation.r, attenuation.g), attenuation.b);
+                if (random() > max_component) {
+                    break;
+                }
+                attenuation /= max_component;
+            }
         } else {
             // Background hit - return accumulated color with background
             vec3 unit_direction = normalize(ray.direction);
@@ -302,28 +396,50 @@ void main() {
         return;
     }
     
-    // Initialize RNG
-    rng_state = wang_hash(pixel_coords.y * image_size.x + pixel_coords.x + uint(time * 1000000.0));
+    // Initialize RNG with better seeding
+    init_random(uvec2(pixel_coords), uint(frame_count));
     
-    vec3 color = vec3(0.0);
+    vec3 pixel_color = vec3(0.0);
     
+    // Use stratified sampling for better coverage
     for (int s = 0; s < samples_per_pixel; s++) {
-        float u = (float(pixel_coords.x) + random()) / float(image_size.x);
-        float v = (float(pixel_coords.y) + random()) / float(image_size.y);
+        vec2 sample_offset = stratified_sample(s, samples_per_pixel);
+        
+        float u = (float(pixel_coords.x) + sample_offset.x) / float(image_size.x);
+        float v = (float(pixel_coords.y) + sample_offset.y) / float(image_size.y);
         
         vec3 ray_origin = camera.position;
         vec3 ray_direction = camera.lower_left_corner + u * camera.horizontal + v * camera.vertical - camera.position;
         
         Ray ray = Ray(ray_origin, normalize(ray_direction));
-        color += ray_color(ray, max_depth);
+        pixel_color += ray_color(ray, max_depth);
     }
     
-    color /= float(samples_per_pixel);
+    pixel_color /= float(samples_per_pixel);
+    
+    // Temporal accumulation for interactive mode
+    vec3 accumulated_color;
+    if (reset_accumulation || frame_count == 1) {
+        accumulated_color = pixel_color;
+    } else {
+        vec4 prev_color = imageLoad(accumulation_buffer, pixel_coords);
+        float weight = 1.0 / float(frame_count);
+        accumulated_color = mix(prev_color.rgb, pixel_color, weight);
+    }
+    
+    // Store accumulated color
+    imageStore(accumulation_buffer, pixel_coords, vec4(accumulated_color, 1.0));
+    
+    // Apply tone mapping and gamma correction
+    vec3 final_color = accumulated_color;
+    
+    // Simple tone mapping to prevent blown highlights
+    final_color = final_color / (final_color + vec3(1.0));
     
     // Gamma correction
-    color = sqrt(color);
+    final_color = pow(final_color, vec3(1.0/2.2));
     
-    imageStore(output_image, pixel_coords, vec4(color, 1.0));
+    imageStore(output_image, pixel_coords, vec4(final_color, 1.0));
 }
 )";
 }
