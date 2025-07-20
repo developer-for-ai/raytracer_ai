@@ -1,0 +1,22 @@
+# Real-time optimized scene
+camera 0 2 8 0 0 0 0 1 0 45 1.5
+background 0.2 0.3 0.5
+
+# Materials (simplified for real-time)
+material ground lambertian 0.5 0.5 0.5
+material red_sphere lambertian 0.8 0.2 0.2
+material metal_sphere metal 0.8 0.6 0.2 0.1
+material glass_sphere dielectric 1.0 1.0 1.0 1.5
+material light emissive 3 3 3
+
+# Ground
+sphere 0 -1000 0 1000 ground
+
+# Main objects (fewer for real-time performance)
+sphere -2 0 -2 0.5 red_sphere
+sphere 0 0 -2 0.5 metal_sphere
+sphere 2 0 -2 0.5 glass_sphere
+
+# Lights
+sphere -3 3 -1 0.4 light
+sphere 3 3 -1 0.4 light

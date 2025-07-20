@@ -1,0 +1,24 @@
+# Cornell Box scene
+camera 278 278 -800 278 278 0 0 1 0 40 1.0
+background 0 0 0
+
+# Materials
+material red lambertian 0.65 0.05 0.05
+material white lambertian 0.73 0.73 0.73
+material green lambertian 0.12 0.45 0.15
+material light emissive 15 15 15
+
+# Cornell box walls
+plane 555 0 0 -1 0 0 green    # Right wall (green)
+plane 0 0 0 1 0 0 red         # Left wall (red)  
+plane 0 0 0 0 0 1 white       # Back wall
+plane 0 0 555 0 0 -1 white    # Front wall
+plane 0 555 0 0 -1 0 white    # Ceiling
+plane 0 0 0 0 1 0 white       # Floor
+
+# Light (area light approximation with multiple spheres)
+sphere 278 554 278 50 light
+
+# Boxes (approximated with spheres for simplicity)
+sphere 185 82.5 169 80 white
+sphere 370 165 351 160 white

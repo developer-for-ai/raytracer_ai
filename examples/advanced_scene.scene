@@ -1,0 +1,35 @@
+# Advanced scene with various materials and lighting
+camera 3 3 2 0 0 -1 0 1 0 45 1.5
+background 0.1 0.1 0.2
+
+# Materials
+material ground lambertian 0.5 0.5 0.5
+material center_sphere dielectric 1.0 1.0 1.0 1.5
+material left_sphere lambertian 0.4 0.2 0.1
+material right_sphere metal 0.7 0.6 0.5 0.0
+material fuzzy_metal metal 0.8 0.8 0.9 0.3
+material red_light emissive 8 2 2
+material blue_light emissive 2 2 8
+material green_light emissive 2 8 2
+
+# Ground
+sphere 0 -1000 -1 1000 ground
+
+# Main spheres
+sphere 0 0 -1 0.5 center_sphere
+sphere -1 0 -1 0.5 left_sphere  
+sphere 1 0 -1 0.5 right_sphere
+sphere 2.5 0 -1 0.5 fuzzy_metal
+
+# Small glass marbles
+sphere -0.5 -0.3 -0.5 0.2 center_sphere
+sphere 0.5 -0.3 -0.5 0.2 center_sphere
+sphere 0 -0.3 -1.5 0.2 center_sphere
+
+# Floating lights
+sphere -2 3 0 0.3 red_light
+sphere 2 3 -2 0.3 blue_light
+sphere 0 4 1 0.3 green_light
+
+# Back wall (plane)
+plane 0 0 -3 0 0 1 ground

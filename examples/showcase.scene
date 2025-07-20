@@ -1,0 +1,83 @@
+# Comprehensive raytracer feature demonstration
+# This scene showcases all material types, complex lighting, and BVH performance
+
+camera 0 2 8 0 0 0 0 1 0 45 1.6
+background 0.2 0.3 0.5
+
+# === MATERIALS ===
+# Diffuse materials
+material ground lambertian 0.5 0.5 0.5
+material red_diffuse lambertian 0.8 0.2 0.2
+material green_diffuse lambertian 0.2 0.8 0.2  
+material blue_diffuse lambertian 0.2 0.2 0.8
+material yellow_diffuse lambertian 0.8 0.8 0.2
+
+# Metal materials with varying roughness
+material mirror metal 0.9 0.9 0.9 0.0
+material rough_metal metal 0.7 0.7 0.8 0.4
+material gold metal 1.0 0.8 0.3 0.1
+material copper metal 0.8 0.5 0.3 0.05
+
+# Glass materials with different IOR
+material glass dielectric 1.0 1.0 1.0 1.5
+material diamond dielectric 1.0 1.0 1.0 2.4
+material water dielectric 0.9 0.95 1.0 1.33
+
+# Light sources
+material white_light emissive 5 5 5
+material warm_light emissive 8 6 4  
+material cool_light emissive 4 6 8
+material colored_light emissive 10 2 10
+
+# === SCENE OBJECTS ===
+# Large ground sphere
+sphere 0 -1000 0 1000 ground
+
+# Main display spheres (front row)
+sphere -3 0 -2 0.5 red_diffuse
+sphere -1 0 -2 0.5 mirror
+sphere 1 0 -2 0.5 glass  
+sphere 3 0 -2 0.5 gold
+
+# Second row - elevated
+sphere -3 1 -4 0.5 green_diffuse
+sphere -1 1 -4 0.5 rough_metal
+sphere 1 1 -4 0.5 diamond
+sphere 3 1 -4 0.5 copper
+
+# Third row - more elevated  
+sphere -2 2 -6 0.5 blue_diffuse
+sphere 0 2 -6 0.5 water
+sphere 2 2 -6 0.5 yellow_diffuse
+
+# Small accent spheres
+sphere -1.5 0.3 -1 0.2 glass
+sphere 1.5 0.3 -1 0.2 diamond
+sphere 0 0.3 -0.5 0.15 mirror
+
+# Light sources positioned strategically
+sphere -4 4 2 0.4 warm_light     # Main warm light (left)
+sphere 4 4 2 0.4 cool_light      # Main cool light (right)  
+sphere 0 6 -2 0.3 white_light    # Top key light
+sphere 2 1.5 1 0.2 colored_light # Accent colored light
+
+# Back walls for bounce lighting
+plane 0 0 -8 0 0 1 ground    # Back wall
+plane -6 0 0 1 0 0 ground    # Left wall  
+plane 6 0 0 -1 0 0 ground    # Right wall
+
+# Ceiling for light bounce
+plane 0 8 0 0 -1 0 ground    # Ceiling
+
+# Additional complexity for BVH testing
+sphere -4.5 0.3 -1.5 0.3 copper
+sphere -3.5 0.3 -1.5 0.3 gold
+sphere -2.5 0.3 -1.5 0.3 glass
+sphere 2.5 0.3 -1.5 0.3 mirror
+sphere 3.5 0.3 -1.5 0.3 water
+sphere 4.5 0.3 -1.5 0.3 diamond
+
+# Floating elements for depth
+sphere -1 3 -3 0.3 glass
+sphere 1 3.5 -3 0.3 mirror  
+sphere 0 4 -4 0.25 diamond
