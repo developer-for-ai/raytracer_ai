@@ -1,0 +1,67 @@
+#pragma once
+#include "common.h"
+#include "scene.h"
+#include <memory>
+
+// Forward declarations to avoid including OpenGL headers in header
+typedef unsigned int GLuint;
+
+struct GPUMaterial {
+    Vec3 albedo;
+    float roughness;
+    Vec3 emission; 
+    float ior;
+    int type; // 0=lambertian, 1=metal, 2=dielectric, 3=emissive
+    float padding[3];
+};
+
+struct GPUSphere {
+    Vec3 center;
+    float radius;
+    int material_id;
+    float padding[3];
+};
+
+struct GPUCamera {
+    Vec3 position;
+    float padding1;
+    Vec3 lower_left_corner;
+    float padding2;
+    Vec3 horizontal;
+    float padding3;
+    Vec3 vertical;
+    float padding4;
+    Vec3 u, v, w;
+    float lens_radius;
+};
+
+class GPURayTracer {
+private:
+    GLuint compute_shader;
+    GLuint shader_program;
+    GLuint output_texture;
+    GLuint material_buffer;
+    GLuint sphere_buffer;
+    GLuint camera_buffer;
+    
+    int window_width, window_height;
+    int num_materials, num_spheres;
+    
+    bool compile_shader(const std::string& source, GLuint& shader);
+    bool create_compute_program();
+    void setup_buffers(const Scene& scene);
+    
+public:
+    GPURayTracer(int width, int height);
+    ~GPURayTracer();
+    
+    bool initialize();
+    void load_scene(const Scene& scene);
+    void render(const Camera& camera, int samples, int max_depth);
+    void resize(int width, int height);
+    
+    GLuint get_output_texture() const { return output_texture; }
+    
+    // Update camera without full scene reload
+    void update_camera(const Camera& camera);
+};
